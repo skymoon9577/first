@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>네일 수채화 갤러리 (데모)</title>
+  <style>
+    :root {
+      --bg: #fafafa;
+      --fg: #222;
+      --muted: #666;
+      --card: #ffffff;
+      --border: #e6e6e6;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, Apple SD Gothic Neo, Noto Sans KR, '맑은 고딕', sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      line-height: 1.6;
+    }
+    header {
+      position: sticky;
+      top: 0;
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 16px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      z-index: 10;
+    }
+    header h1 { margin: 0; font-size: 18px; }
+    main { max-width: 960px; margin: 24px auto; padding: 0 16px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+      margin-bottom: 20px;
+    }
+    .hero img {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 12px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+    }
+    footer {
+      padding: 24px 16px;
+      text-align: center;
+      color: var(--muted);
+    }
+    code, pre { background:#f4f4f4; border-radius:8px; padding:2px 6px; }
+    .steps ol { margin: 0 0 0 18px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>네일 수채화 갤러리</h1>
+    <span style="color:#777">HTML/CSS로 구현된 가벼운 데모 페이지</span>
+  </header>
+
+  <main>
+    <section class="card hero">
+      <h2>완성 이미지</h2>
+      <p>아래 이미지는 빨강색으로 통일된 수채화 스타일 네일 아트 예시입니다.</p>
+      <img src="assets/watercolor_red_nails.png" alt="Watercolor red nails" />
+      <p style="color:#666;font-size:14px">이미지 비율을 유지하며 화면 크기에 맞춰 자동으로 축소/확대됩니다.</p>
+    </section>
+
+    <section class="card steps">
+      <h2>이 페이지의 구성</h2>
+      <div class="grid">
+        <div>
+          <h3>1) HTML</h3>
+          <p>이 파일은 <code>index.html</code> 이며, 반응형 이미지와 간단한 카드 레이아웃을 포함합니다.</p>
+        </div>
+        <div>
+          <h3>2) Python + Markdown</h3>
+          <p><code>01_image_and_md.py</code> 실행 시, 첨부 이미지를 설명하는 <code>image_explanation.md</code>를 생성합니다.</p>
+        </div>
+        <div>
+          <h3>3) 웹 크롤링 예제</h3>
+          <p><code>02_web_crawl_example.py</code>는 초간단 크롤러 예제로, 특정 URL의 제목/링크를 추출해 <code>crawl_result.md</code>로 저장합니다.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>초보자 전용: 아주 간단한 순서 가이드</h2>
+      <ol>
+        <li>프로젝트 폴더를 열고 <code>index.html</code>을 더블클릭하여 브라우저에서 확인합니다.</li>
+        <li>터미널에서 <code>python 01_image_and_md.py</code>를 실행해 설명용 마크다운을 만듭니다.</li>
+        <li><code>python 02_web_crawl_example.py --url "https://example.com"</code> 형태로 크롤링 예제를 실행합니다.</li>
+      </ol>
+      <p style="color:#666">문제가 생기면 어느 단계까지 했는지 숫자로 알려주세요. (예: “2번까지 완료”)</p>
+    </section>
+
+    <section class="card">
+      <h2>개발자도구(F12)로 공통 태그 규칙 찾기</h2>
+      <p>크롬 개발자도구의 <strong>Elements</strong> 탭에서 좌측 상단의 선택 도구(화살표 아이콘)를 누르면 화면의 특정 영역을 선택할 수 있습니다.
+         비슷한 아이템을 여러 개 선택해 공통 클래스/태그/속성을 관찰하고 그 패턴을 CSS 선택자로 정리하세요.</p>
+      <ul>
+        <li>예) 상품 카드가 모두 <code>&lt;div class="product-card"&gt;</code> 구조라면, CSS/크롤러에서 <code>.product-card</code>를 공통 선택자로 사용</li>
+        <li>예) 제목이 항상 <code>&lt;h2 class="title"&gt;</code> 라면, 크롤러에서 <code>select('h2.title')</code>를 사용할 수 있습니다.</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>© 2025 Watercolor Nails Demo</footer>
+</body>
+</html>
