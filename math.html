@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>산수 퀴즈 — 자릿수 선택 · 목숨 · 결과분석</title>
+<style>
+  :root{
+    --bg:#0b1220; --fg:#e9eef6; --muted:#9fb0c7; --accent:#7bdcff; --good:#6df29a; --bad:#ff7b8b;
+    --card:rgba(10,16,28,.86); --border:rgba(255,255,255,.12);
+  }
+  html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+  .wrap{position:relative;min-height:100%;display:grid;place-items:center}
+  /* HUD */
+  #hud{position:fixed;left:12px;top:12px;display:flex;gap:10px;align-items:center;z-index:10;flex-wrap:wrap}
+  .badge{display:inline-flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);
+         padding:6px 10px;border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,.25)}
+  .badge b{font-size:18px}
+  #lives b{font-size:18px;letter-spacing:2px}
+  #streak b{font-variant-numeric:tabular-nums}
+  #scoreFx{position:absolute;left:0;top:0;transform:translate(-9999px,-9999px);pointer-events:none}
+  .float{position:absolute;font-weight:700;filter:drop-shadow(0 4px 6px rgba(0,0,0,.45));opacity:0;animation:pop .9s ease-out both}
+  @keyframes pop{0%{transform:translateY(0) scale(.7);opacity:0} 15%{opacity:1}
+                 60%{transform:translateY(-22px) scale(1.06)}100%{opacity:0;transform:translateY(-36px) scale(1)}}
+  /* Timer */
+  #timerWrap{position:fixed;left:12px;right:12px;top:58px;height:10px;border-radius:999px;background:rgba(255,255,255,.12);
+             border:1px solid var(--border);overflow:hidden;z-index:9}
+  #timerBar{height:100%;width:100%;background:linear-gradient(90deg,var(--accent),#c8ff7b);transform-origin:left center}
+  /* Card */
+  #card{width:min(860px,94vw);background:var(--card);border:1px solid var(--border);border-radius:18px;padding:18px 18px 16px;
+        box-shadow:0 12px 36px rgba(0,0,0,.35);display:grid;gap:16px}
+  #question{min-height:120px;display:grid;place-items:center;border-radius:14px;border:1px dashed var(--border)}
+  .qtext{font-size: clamp(28px, 5.2vw, 54px);line-height:1.15;letter-spacing:0.5px}
+  .box{display:inline-grid;place-items:center;position:relative;width:1.2em;height:1.2em;border-radius:8px;border:2px solid var(--fg);
+       margin:0 .2em;background:rgba(255,255,255,.06)}
+  .box .fill{font-weight:700}
+  .box.pop{animation:boxpop .25s ease-out}
+  @keyframes boxpop{0%{transform:scale(.8)}60%{transform:scale(1.08)}100%{transform:scale(1)}}
+  /* Answer flash (right-side) */
+  .answer{position:relative;display:inline-grid;min-width:2ch}
+  .answer .flashAnswer{position:absolute;left:0;top:-1.8em;white-space:nowrap;font-weight:800;color:var(--bad);
+                       text-shadow:0 2px 6px rgba(0,0,0,.45);opacity:0;transition:opacity 1s ease}
+  .answer.showFlash .flashAnswer{opacity:1}
+  .equals{padding:0 .2em}
+  /* Choices */
+  #choices{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+  .btn{font-size:20px;padding:14px 10px;border-radius:12px;border:1px solid var(--border);background:#101a2e;color:var(--fg);
+       cursor:pointer;transition:transform .08s ease, box-shadow .2s ease;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+  .btn:hover{transform:translateY(-2px)}
+  .btn:active{transform:translateY(0)}
+  .btn.good{background:rgba(109,242,154,.12);border-color:#2be17c}
+  .btn.bad{background:rgba(255,123,139,.12);border-color:#ff7b8b}
+  /* Footer controls */
+  #controls{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+  .muted{color:var(--muted);font-size:13px}
+  .pill{padding:8px 12px;border-radius:999px;border:1px solid var(--border);background:#101a2e;color:var(--fg);cursor:pointer}
+  #confetti2d{position:fixed;inset:0;pointer-events:none;z-index:8}
+  /* Optional Three.js layer sits behind UI */
+  #threeStage{position:fixed;inset:0;pointer-events:none;z-index:1}
+  /* Overlays */
+  .overlay{position:fixed;inset:0;background:rgba(7,10,18,.6);backdrop-filter:blur(6px);display:grid;place-items:center;z-index:20}
+  .overlay[hidden]{display:none !important}
+  .panel{width:min(740px,94vw);background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px 18px 16px;
+         box-shadow:0 18px 60px rgba(0,0,0,.45);display:grid;gap:14px}
+  .panel h2{margin:.2rem 0 .3rem;font-size:22px}
+  fieldset{border:1px dashed var(--border);border-radius:12px;padding:10px}
+  legend{padding:0 6px;color:var(--muted)}
+  .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .chip{display:inline-flex;gap:8px;align-items:center;padding:8px 12px;border-radius:999px;border:1px solid var(--border);
+        background:#101a2e;cursor:pointer}
+  .chip input{accent-color:#7bdcff}
+  .right{justify-content:flex-end}
+  .list{margin:0;padding-left:18px}
+  .list li{margin:.2rem 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <canvas id="confetti2d" width="0" height="0"></canvas>
+  <div id="threeStage"></div>
+
+  <div id="hud" aria-live="polite">
+    <div class="badge" id="scoreBadge">점수: <b id="score">0</b></div>
+    <div class="badge" id="qBadge">문항: <b id="qnum">0</b></div>
+    <div class="badge" id="lives">목숨: <b id="livesText">♥♥♥</b></div>
+    <div class="badge" id="streak">연속: <b id="streakText">0</b></div>
+    <div id="scoreFx" aria-hidden="true"></div>
+  </div>
+  <div id="timerWrap" aria-hidden="true"><div id="timerBar"></div></div>
+
+  <div id="card" role="group" aria-label="산수 퀴즈 카드">
+    <div id="question"><div class="qtext" id="qtext">시작하려면 ‘시작’ 버튼을 눌러 설정하세요</div></div>
+    <div id="choices"></div>
+    <div id="controls">
+      <div class="muted">남은시간: <b id="timeLabel">0.0s</b> · 현재 제한시간: <b id="limitLabel">0.0s</b></div>
+      <button id="btnStart" class="pill">시작</button>
+      <button id="btnReset" class="pill">초기화</button>
+    </div>
+  </div>
+</div>
+
+<!-- Setup Overlay -->
+<div class="overlay" id="setupOverlay" hidden>
+  <div class="panel">
+    <h2>시작 설정</h2>
+    <fieldset>
+      <legend>문제 자릿수</legend>
+      <div class="row" role="radiogroup" aria-label="자릿수 선택">
+        <label class="chip"><input type="radio" name="digits" value="1" checked> 1자리 (0~9)</label>
+        <label class="chip"><input type="radio" name="digits" value="2"> 2자리 (0~99)</label>
+        <label class="chip"><input type="radio" name="digits" value="3"> 3자리 (0~999)</label>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>연산 선택</legend>
+      <div class="row">
+        <label class="chip"><input type="checkbox" id="chkSub"> 뺄셈 포함 (-)</label>
+      </div>
+    </fieldset>
+    <div class="row right">
+      <button id="btnBegin" class="pill">게임 시작</button>
+    </div>
+  </div>
+</div>
+
+<!-- Results Overlay -->
+<div class="overlay" id="resultOverlay" hidden>
+  <div class="panel" id="resultPanel">
+    <h2>결과</h2>
+    <div id="summary"></div>
+    <fieldset>
+      <legend>부족한 부분 분석</legend>
+      <ul class="list" id="weaknessList"></ul>
+    </fieldset>
+    <div class="row right">
+      <button id="btnRestart" class="pill">다시 시작</button>
+      <button id="btnSetup" class="pill">설정으로</button>
+    </div>
+  </div>
+</div>
+
+<!-- Try to load local three.min.js for 3D confetti. -->
+<script>
+(function(){
+  const s = document.createElement('script');
+  s.src = './lib/three.min.js'; // put three.min.js next to this HTML for offline 3D effects
+  s.onerror = () => { /* ignore; fallback to 2D */ };
+  document.head.appendChild(s);
+})();
+</script>
+
+<script>
+// ========================= CONFIG =========================
+const CONFIG = {
+  MAX_VALUE: 999,           // 동적으로 자릿수 선택에 따라 변경
+  BASE_LIMIT: 5.0,          // 기본 제한시간(초)
+  DECREASE_PER_10: 0.5,     // 10문제당 줄어드는 시간(초)
+  MIN_LIMIT: 2.0,           // 최소 제한시간(초)
+  SCORE_CORRECT: 10,        // 정답 가점
+  SCORE_WRONG: 0,           // 오답 가점
+  USE_SUBTRACTION:false     // 뺄셈 사용 여부
+};
+
+// ========================= STATE ==========================
+let qIndex = 0, score = 0, timer = null, timeLeft = 0, timeLimit = CONFIG.BASE_LIMIT;
+let currentAnswer = null, currentQuestion = null;
+let threeReady = false;
+let lives = 3, streak = 0, lifeAwards = 0;
+const history = []; // per-question records
+
+// DOM
+const elScore = document.getElementById('score');
+const elScoreBadge = document.getElementById('scoreBadge');
+const elQnum = document.getElementById('qnum');
+const elQtext = document.getElementById('qtext');
+const elChoices = document.getElementById('choices');
+const elBtnStart = document.getElementById('btnStart');
+const elBtnReset = document.getElementById('btnReset');
+const elTimerBar = document.getElementById('timerBar');
+const elTimeLabel = document.getElementById('timeLabel');
+const elLimitLabel = document.getElementById('limitLabel');
+const elFxRoot = document.getElementById('scoreFx');
+const canvas2D = document.getElementById('confetti2d');
+const elLivesText = document.getElementById('livesText');
+const elStreakText = document.getElementById('streakText');
+
+const setupOverlay = document.getElementById('setupOverlay');
+const resultOverlay = document.getElementById('resultOverlay');
+const btnBegin = document.getElementById('btnBegin');
+const btnRestart = document.getElementById('btnRestart');
+const btnSetup = document.getElementById('btnSetup');
+const chkSub = document.getElementById('chkSub');
+const summaryNode = document.getElementById('summary');
+const weaknessList = document.getElementById('weaknessList');
+
+// ========================= UTIL ===========================
+const randInt = (min, max) => Math.floor(Math.random()*(max-min+1))+min;
+const shuffle = (arr) => arr.sort(() => Math.random() - 0.5);
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+
+function currentLimit(){
+  const steps = Math.floor(qIndex / 10);
+  return clamp(CONFIG.BASE_LIMIT - steps * CONFIG.DECREASE_PER_10, CONFIG.MIN_LIMIT, 999);
+}
+
+function fmtQ(a,b,c, unknownPos, op='+'){
+  const unknownHTML = '<span class="box unknown"><span class="fill">□</span></span>';
+  let left;
+  // Right side answer wrapper (always present)
+  let rightInner = (unknownPos === 2) ? unknownHTML : `${c}`;
+  const right = `<span class="answer"><span class="answerText">${rightInner}</span><span class="flashAnswer"></span></span>`;
+  if (unknownPos === 0) left = `${unknownHTML} ${op} ${b}`;
+  else left = `${a} ${op} ${unknownPos===1?unknownHTML:b}`;
+  return `${left} <span class="equals">=</span> ${right}`;
+}
+
+// Generate one question (addition default; optional subtraction)
+function makeQuestion(){
+  const useSub = CONFIG.USE_SUBTRACTION && Math.random()<0.5;
+  const op = useSub ? '-' : '+';
+  let a,b,c;
+  if(op === '+'){
+    a = randInt(0, CONFIG.MAX_VALUE);
+    b = randInt(0, CONFIG.MAX_VALUE - a);
+    c = a + b;
+  }else{ // subtraction: ensure non-negative and within range
+    c = randInt(0, CONFIG.MAX_VALUE);
+    b = randInt(0, c);
+    a = c - b;
+  }
+  const unknownPos = randInt(0,2);
+  let answer;
+  if(unknownPos===0) answer = a;
+  else if(unknownPos===1) answer = b;
+  else answer = c;
+
+  const choices = new Set([answer]);
+  while(choices.size<4){
+    const span = Math.max(3, Math.round(CONFIG.MAX_VALUE*0.02));
+    let v = clamp(answer + randInt(-span,span) || answer+1, 0, CONFIG.MAX_VALUE);
+    if(!choices.has(v)) choices.add(v);
+  }
+  const cArr = shuffle([...choices]);
+  return {a,b,c,op,unknownPos,answer,choices:cArr, qhtml:fmtQ(a,b,c,unknownPos,op)};
+}
+
+// ===================== GAME LOOP ==========================
+function openSetup(){
+  setupOverlay.hidden = false;
+}
+function closeSetup(){ setupOverlay.hidden = true; }
+
+function startGame(){
+  // read settings
+  const digits = Number(document.querySelector('input[name="digits"]:checked')?.value || 1);
+  CONFIG.MAX_VALUE = Math.pow(10, digits)-1;
+  CONFIG.USE_SUBTRACTION = !!chkSub.checked;
+
+  // reset state
+  qIndex = 0; score = 0; lives = 3; streak = 0; lifeAwards = 0;
+  history.length = 0;
+  elScore.textContent = score;
+  updateLives();
+  updateStreak(0);
+  closeSetup();
+  nextQuestion();
+}
+
+function nextQuestion(){
+  if(timer){ clearInterval(timer); timer=null; }
+  qIndex++;
+  elQnum.textContent = qIndex;
+  timeLimit = currentLimit();
+  elLimitLabel.textContent = timeLimit.toFixed(1)+'s';
+  const q = makeQuestion(); currentQuestion = q; currentAnswer = q.answer;
+
+  elQtext.innerHTML = q.qhtml;
+  elChoices.innerHTML = '';
+  [...q.choices].sort((a,b)=>a-b).forEach(v => {
+    const btn = document.createElement('button');
+    btn.className = 'btn';
+    btn.textContent = v;
+    btn.onclick = () => handleChoice(v, btn);
+    elChoices.appendChild(btn);
+  });
+
+  // reset & start timer
+  timeLeft = timeLimit;
+  elTimeLabel.textContent = timeLeft.toFixed(1)+'s';
+  elTimerBar.style.transition = 'none';
+  elTimerBar.style.transform = 'scaleX(1)';
+  setTimeout(() => { elTimerBar.style.transition = `transform ${timeLimit}s linear`; elTimerBar.style.transform = 'scaleX(0)'; }, 30);
+  const startAt = performance.now();
+  timer = setInterval(() => {
+    timeLeft = Math.max(0, timeLeft - 0.1);
+    elTimeLabel.textContent = timeLeft.toFixed(1)+'s';
+    if(timeLeft<=0){
+      clearInterval(timer); timer=null;
+      registerResult({chosen:null, correct:false, timeout:true, timeUsed: (performance.now()-startAt)/1000});
+      loseLife();
+      revealAnswer(null);
+      setTimeout(checkContinue, 700);
+    }
+  }, 100);
+}
+
+function handleChoice(value, btn){
+  if(timer){ clearInterval(timer); timer=null; }
+  const timeUsed = Number((currentLimit() - timeLeft).toFixed(2));
+  const correct = (value === currentAnswer);
+
+  // Visual: put chosen number into the □ box
+  const boxEl = document.querySelector('#question .box.unknown');
+  if(boxEl){
+    const fill = boxEl.querySelector('.fill');
+    if(fill){ fill.textContent = value; }
+    boxEl.classList.remove('pop'); void boxEl.offsetWidth; boxEl.classList.add('pop');
+  }
+  // Red flash at answer area for 1s
+  const ans = document.querySelector('#question .answer');
+  if(ans){
+    const flash = ans.querySelector('.flashAnswer');
+    if(flash){
+      const diff = value - currentAnswer;
+      const pm = diff===0 ? '±0' : (diff>0? ('+'+Math.abs(diff)) : ('-'+Math.abs(diff)));
+      flash.textContent = `정답 ${currentAnswer} (오차 ${pm})`;
+      ans.classList.add('showFlash');
+      setTimeout(()=>{ ans.classList.remove('showFlash'); }, 1000);
+    }
+  }
+
+  registerResult({chosen:value, correct, timeout:false, timeUsed});
+  revealAnswer(value);
+  if(correct){
+    score += CONFIG.SCORE_CORRECT;
+    elScore.textContent = score;
+    addStreak();
+    popFx(elScoreBadge, '+ '+CONFIG.SCORE_CORRECT, 'var(--good)');
+    confettiBurst();
+    setTimeout(checkContinue, 600);
+  } else {
+    loseLife();
+    resetStreak();
+    setTimeout(checkContinue, 600);
+  }
+}
+
+function checkContinue(){
+  if(lives<=0){ endGame(); }
+  else { nextQuestion(); }
+}
+
+function revealAnswer(chosen){
+  const buttons = [...document.querySelectorAll('#choices .btn')];
+  buttons.forEach(b => {
+    const v = Number(b.textContent);
+    if(v === currentAnswer) b.classList.add('good'); else if (v === chosen) b.classList.add('bad');
+    b.disabled = true;
+  });
+}
+
+// ===================== Lives & Streak =====================
+function updateLives(){
+  elLivesText.textContent = '♥'.repeat(Math.max(0,lives));
+}
+
+function addStreak(){
+  streak += 1;
+  updateStreak(streak);
+  if(streak>0 && streak % 10 === 0){
+    lives += 1; lifeAwards += 1;
+    updateLives();
+    popFx(document.getElementById('lives'), '+1 ♥', 'var(--good)');
+    confettiBurst();
+  }
+}
+function resetStreak(){ updateStreak(0); }
+function updateStreak(v){ streak = v; elStreakText.textContent = streak; }
+
+function loseLife(){
+  lives = Math.max(0, lives-1);
+  updateLives();
+  popFx(document.getElementById('lives'), '‑1 ♥', 'var(--bad)');
+}
+
+// ===================== History / Analysis =================
+function registerResult({chosen, correct, timeout, timeUsed}){
+  const rec = {
+    qnum:qIndex, a:currentQuestion.a, b:currentQuestion.b, c:currentQuestion.c,
+    op:currentQuestion.op, unknownPos:currentQuestion.unknownPos,
+    answer:currentQuestion.answer, chosen, correct, timeout, timeUsed, limit:timeLimit
+  };
+  history.push(rec);
+}
+
+function endGame(){
+  // build summary
+  const total = history.length;
+  const correctN = history.filter(r=>r.correct).length;
+  const wrongN = total - correctN;
+  const timeouts = history.filter(r=>r.timeout).length;
+  const avgTime = (history.reduce((s,r)=>s+r.timeUsed,0) / Math.max(1,total)).toFixed(2);
+
+  const byUnknown = [0,0,0], wrongByUnknown=[0,0,0];
+  history.forEach(r=>{
+    byUnknown[r.unknownPos]++;
+    if(!r.correct) wrongByUnknown[r.unknownPos]++;
+  });
+
+  // Weakness detection: pick top 2
+  const tips = [];
+  if(timeouts>wrongN*0.5){
+    tips.push('시간 초과가 많아요: 작은 수부터 빠르게 더하고, 모르면 바로 추정 후 넘어가는 연습을 해보세요.');
+  }
+  const maxWrong = Math.max(...wrongByUnknown);
+  const idx = wrongByUnknown.indexOf(maxWrong);
+  if(maxWrong>0){
+    if(idx===2) tips.push('오른쪽 빈칸(= 합) 유형에서 오답이 많아요. 두 수를 빠르게 합산하는 연습을 추천합니다.');
+    if(idx===0) tips.push('왼쪽 빈칸(첫 번째 수) 유형에서 오답이 많아요. 합에서 뺄셈으로 되돌려 계산하는 연습을 해보세요.');
+    if(idx===1) tips.push('가운데 빈칸(두 번째 수) 유형에서 오답이 많아요. 합에서 뺄셈으로 되돌려 계산하는 연습을 해보세요.');
+  }
+  if(tips.length===0){
+    tips.push('전반적으로 균형 잡힌 성과예요. 제한시간을 조금 더 낮춰 도전해보세요.');
+  }
+
+  summaryNode.innerHTML = `
+    <div class="row" style="gap:14px;flex-wrap:wrap">
+      <div class="badge">총문항: <b>${total}</b></div>
+      <div class="badge">정답: <b>${correctN}</b></div>
+      <div class="badge">오답: <b>${wrongN}</b></div>
+      <div class="badge">시간초과: <b>${timeouts}</b></div>
+      <div class="badge">평균 반응시간: <b>${avgTime}s</b></div>
+      <div class="badge">연속최대: <b>${Math.max(0,...history.map((_,i)=>{
+        // compute longest streak by scanning history
+        let s=0,m=0; history.forEach(r=>{ s = r.correct ? s+1 : 0; m = Math.max(m,s); }); return m;
+      }))}</b></div>
+      <div class="badge">추가획득 ♥: <b>${lifeAwards}</b></div>
+    </div>
+    <div class="muted">빈칸 위치별 오답: [왼쪽: ${wrongByUnknown[0]} / 가운데: ${wrongByUnknown[1]} / 오른쪽(합): ${wrongByUnknown[2]}]</div>
+  `;
+
+  weaknessList.innerHTML = tips.map(t=>`<li>${t}</li>`).join('');
+
+  resultOverlay.hidden = false;
+}
+
+// ===================== FX: POP TEXT =======================
+function popFx(anchorEl, text, color){
+  const rect = anchorEl.getBoundingClientRect();
+  const span = document.createElement('span');
+  span.className = 'float';
+  span.style.left = (rect.left + rect.width/2)+'px';
+  span.style.top = (rect.top - 6)+'px';
+  span.style.color = color;
+  span.textContent = text;
+  elFxRoot.appendChild(span);
+  setTimeout(() => span.remove(), 1000);
+}
+
+// ===================== 2D CONFETTI (Fallback) =============
+const ctx2D = canvas2D.getContext('2d');
+let confetti = [];
+function resize2D(){
+  canvas2D.width = innerWidth; canvas2D.height = innerHeight;
+}
+window.addEventListener('resize', resize2D); resize2D();
+
+function confettiBurst(){
+  if (window.THREE && threeReady) { spawnThreeConfetti(); return; }
+  const N = 120;
+  for(let i=0;i<N;i++){
+    confetti.push({
+      x: innerWidth*0.15 + Math.random()*innerWidth*0.7,
+      y: innerHeight*0.2,
+      vx: (Math.random()-0.5)*6,
+      vy: -Math.random()*6 - 2,
+      r: Math.random()*2+1,
+      life: Math.random()*1+0.9
+    });
+  }
+}
+function tick2D(dt){
+  ctx2D.clearRect(0,0,canvas2D.width,canvas2D.height);
+  for(let i=confetti.length-1;i>=0;i--){
+    const p = confetti[i];
+    p.vy += 12*dt; // gravity
+    p.x += p.vx; p.y += p.vy;
+    p.life -= dt;
+    if(p.y>innerHeight+40 || p.life<=0) confetti.splice(i,1);
+    else{
+      ctx2D.globalAlpha = Math.max(0, p.life);
+      ctx2D.beginPath(); ctx2D.arc(p.x,p.y,p.r,0,Math.PI*2); ctx2D.fillStyle = '#'+((Math.random()*0xffffff)|0).toString(16).padStart(6,'0'); ctx2D.fill();
+    }
+  }
+}
+let lastTS = performance.now();
+function loop2D(ts){
+  const dt = Math.min(0.033,(ts-lastTS)/1000); lastTS = ts;
+  tick2D(dt);
+  requestAnimationFrame(loop2D);
+}
+requestAnimationFrame(loop2D);
+
+// ===================== Optional THREE Confetti ============
+let threeScene, threeCamera, threeRenderer, threeParticles = null, threeClock;
+function tryInitThree(){
+  if(!window.THREE || threeReady) return;
+  try{
+    const stage = document.getElementById('threeStage');
+    const w = innerWidth, h = innerHeight;
+    threeRenderer = new THREE.WebGLRenderer({antialias:true,alpha:true});
+    threeRenderer.setSize(w,h); threeRenderer.setPixelRatio(Math.min(2,devicePixelRatio||1));
+    stage.appendChild(threeRenderer.domElement);
+    threeScene = new THREE.Scene();
+    threeCamera = new THREE.PerspectiveCamera(50, w/h, .1, 2000);
+    threeCamera.position.set(0,0,120);
+    const light = new THREE.DirectionalLight(0xffffff,.9); light.position.set(1,2,3); threeScene.add(light);
+    threeClock = new THREE.Clock();
+
+    window.addEventListener('resize', ()=>{
+      const W=innerWidth, H=innerHeight;
+      threeRenderer.setSize(W,H);
+      threeCamera.aspect = W/H; threeCamera.updateProjectionMatrix();
+    });
+
+    threeReady = true;
+    animateThree();
+  }catch(e){ threeReady=false; }
+}
+
+function spawnThreeConfetti(){
+  if(!threeReady) return;
+  const COUNT = 300;
+  const geo = new THREE.BufferGeometry();
+  const pos = new Float32Array(COUNT*3);
+  const vel = new Float32Array(COUNT*3);
+  for(let i=0;i<COUNT;i++){
+    const i3=i*3;
+    pos[i3+0] = (Math.random()-0.5)*80;
+    pos[i3+1] = (Math.random()*40)+10;
+    pos[i3+2] = (Math.random()-0.5)*40;
+    vel[i3+0] = (Math.random()-0.5)*1.5;
+    vel[i3+1] = -Math.random()*2 - 0.8;
+    vel[i3+2] = (Math.random()-0.5)*1.5;
+  }
+  geo.setAttribute('position', new THREE.BufferAttribute(pos,3));
+  geo.setAttribute('velocity', new THREE.BufferAttribute(vel,3));
+  const mat = new THREE.PointsMaterial({size:2, transparent:true, opacity:0.95});
+  const pts = new THREE.Points(geo, mat);
+  pts.userData.life = 1.1;
+  if(threeParticles) threeScene.remove(threeParticles);
+  threeParticles = pts; threeScene.add(pts);
+}
+
+function animateThree(){
+  if(!threeReady) return;
+  requestAnimationFrame(animateThree);
+  const dt = Math.min(0.033, threeClock.getDelta());
+  if(threeParticles){
+    const pos = threeParticles.geometry.getAttribute('position');
+    const vel = threeParticles.geometry.getAttribute('velocity');
+    for(let i=0;i<pos.count;i++){
+      const ix=i*3;
+      vel.array[ix+1] -= 0.08;    // gravity
+      pos.array[ix+0] += vel.array[ix+0]*2;
+      pos.array[ix+1] += vel.array[ix+1]*2;
+      pos.array[ix+2] += vel.array[ix+2]*2;
+    }
+    threeParticles.userData.life -= dt;
+    threeParticles.material.opacity = Math.max(0, threeParticles.userData.life);
+    pos.needsUpdate = true;
+    if(threeParticles.userData.life<=0){
+      threeScene.remove(threeParticles); threeParticles.geometry.dispose();
+      threeParticles = null;
+    }
+  }
+  threeRenderer.render(threeScene, threeCamera);
+}
+
+const threePoll = setInterval(()=>{
+  if(window.THREE){ clearInterval(threePoll); tryInitThree(); }
+}, 300);
+
+
+// Guard: ensure overlays hidden on load (some user agents override [hidden])
+document.addEventListener('DOMContentLoaded', ()=>{
+  const so = document.getElementById('setupOverlay');
+  const ro = document.getElementById('resultOverlay');
+  if(so) so.hidden = true;
+  if(ro) ro.hidden = true;
+});
+// ===================== WIRE-UP ============================
+elBtnStart.addEventListener('click', openSetup);
+elBtnReset.addEventListener('click', ()=>{ location.reload(); });
+btnBegin.addEventListener('click', startGame);
+btnRestart.addEventListener('click', ()=>{ resultOverlay.hidden=true; openSetup(); });
+btnSetup.addEventListener('click', ()=>{ resultOverlay.hidden=true; openSetup(); });
+
+// Keyboard shortcuts for accessibility
+window.addEventListener('keydown', (e)=>{
+  if(e.key==='Enter' && setupOverlay.hidden===false){ startGame(); }
+});
+</script>
+</body>
+</html>
