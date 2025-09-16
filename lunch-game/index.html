@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>점심 메뉴 고르기 게임</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f9f9f9; text-align: center; padding: 30px; }
+    h1 { color: #333; }
+    #menu-list { margin: 20px 0; }
+    input[type=text] { padding: 8px; margin: 5px; }
+    button { padding: 10px 20px; margin: 10px; border:none; border-radius:6px; background:#4caf50; color:#fff; cursor:pointer; }
+    button:hover { background:#45a049; }
+    #result { margin-top: 20px; font-size: 1.4em; font-weight: bold; color:#d6336c; }
+  </style>
+</head>
+<body>
+  <h1>🍱 점심 메뉴 고르기 게임</h1>
+  <p>원하는 메뉴를 입력하고 <b>추가</b>를 누른 뒤, <b>뽑기</b> 버튼으로 선택!</p>
+
+  <div>
+    <input type="text" id="menuInput" placeholder="메뉴 입력" />
+    <button onclick="addMenu()">추가</button>
+  </div>
+
+  <ul id="menu-list"></ul>
+
+  <button onclick="pickMenu()">뽑기 🎲</button>
+
+  <div id="result"></div>
+
+  <script>
+    const menus = [];
+
+    function addMenu(){
+      const input = document.getElementById("menuInput");
+      const menu = input.value.trim();
+      if(menu){
+        menus.push(menu);
+        renderMenus();
+        input.value = "";
+      }
+    }
+
+    function renderMenus(){
+      const list = document.getElementById("menu-list");
+      list.innerHTML = "";
+      menus.forEach((menu,i)=>{
+        const li = document.createElement("li");
+        li.textContent = menu;
+        list.appendChild(li);
+      });
+    }
+
+    function pickMenu(){
+      if(menus.length === 0){
+        document.getElementById("result").textContent = "먼저 메뉴를 추가해주세요!";
+        return;
+      }
+      const randomIndex = Math.floor(Math.random()*menus.length);
+      const chosen = menus[randomIndex];
+      document.getElementById("result").textContent = "오늘의 점심은 → " + chosen + "!";
+    }
+  </script>
+</body>
+</html>
