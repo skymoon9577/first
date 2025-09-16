@@ -2,65 +2,215 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>점심 메뉴 고르기 게임</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>룰렛 점심 메뉴 게임 + 주변 지도</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #f9f9f9; text-align: center; padding: 30px; }
-    h1 { color: #333; }
-    #menu-list { margin: 20px 0; }
-    input[type=text] { padding: 8px; margin: 5px; }
-    button { padding: 10px 20px; margin: 10px; border:none; border-radius:6px; background:#4caf50; color:#fff; cursor:pointer; }
-    button:hover { background:#45a049; }
-    #result { margin-top: 20px; font-size: 1.4em; font-weight: bold; color:#d6336c; }
+    :root{ --ink:#111; --muted:#666; --brand:#5b8def; --acc:#17c964; --warn:#ff7a59; }
+    html,body{height:100%;margin:0;background:#f6f7fb;color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+    .wrap{max-width:1180px;margin:0 auto;padding:20px}
+    h1{margin:.6rem 0 1rem;font-weight:800;letter-spacing:-.02em}
+    .grid{display:grid;grid-template-columns:1.2fr 1fr;gap:18px}
+    @media (max-width:980px){.grid{grid-template-columns:1fr;}}
+    .card{background:#fff;border:1px solid rgba(0,0,0,.08);box-shadow:0 6px 18px rgba(0,0,0,.06);border-radius:14px;padding:14px}
+    .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    input[type=text], select{flex:1;min-width:160px;padding:10px 12px;border:1px solid #d7d8df;border-radius:10px}
+    button{padding:10px 14px;border:none;border-radius:10px;background:var(--brand);color:#fff;font-weight:700;cursor:pointer}
+    button.secondary{background:#e9ecf8;color:#244}
+    button.warn{background:var(--warn)}
+    button:disabled{opacity:.6;cursor:not-allowed}
+    ul{list-style:none;margin:10px 0 0;padding:0;max-height:220px;overflow:auto}
+    li{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;margin:6px 0;background:#f5f7ff;border:1px solid #e4e7fb;border-radius:10px}
+    .tag{font-size:.8rem;color:#334;opacity:.8}
+    .result{margin-top:12px;font-size:1.25rem;font-weight:800}
+    .hint{font-size:.9rem;color:var(--muted)}
+    .footer{margin-top:18px;color:var(--muted);font-size:.85rem}
+    #stage{position:relative;display:grid;place-items:center;padding:8px}
+    canvas{max-width:100%;height:auto;display:block;margin:0 auto}
+    .pointer{position:absolute;top:8px;left:50%;transform:translateX(-50%)}
+    .pointer svg{filter:drop-shadow(0 6px 8px rgba(0,0,0,.22))}
+    .bigbtn{width:100%;padding:14px 16px;border-radius:12px;font-size:1.05rem}
+    #map{width:100%;height:360px;border-radius:12px;border:1px solid #e3e6ef}
+    .mini{font-size:.85rem;color:#445}
   </style>
 </head>
 <body>
-  <h1>🍱 점심 메뉴 고르기 게임</h1>
-  <p>원하는 메뉴를 입력하고 <b>추가</b>를 누른 뒤, <b>뽑기</b> 버튼으로 선택!</p>
+  <div class="wrap">
+    <h1>🍀 룰렛 점심 메뉴 + <span style="color:var(--brand)">내 주변 맛집 검색</span></h1>
+    <div class="grid">
+      <!-- Wheel Card -->
+      <div class="card">
+        <div id="stage">
+          <div class="pointer" aria-hidden="true">
+            <svg width="28" height="38" viewBox="0 0 28 38"><path d="M14 0 L28 38 L0 38 Z" fill="#ffcb2e" stroke="#d99f00" stroke-width="2"/></svg>
+          </div>
+          <canvas id="wheel" width="560" height="560"></canvas>
+        </div>
+        <div class="row">
+          <button id="spinBtn" class="bigbtn">🎲 돌리기</button>
+        </div>
+        <div class="result" id="result">메뉴를 추가하거나, 우측에서 주변 가게를 검색해 추가해보세요.</div>
+        <div class="hint">포인터(△)가 가리키는 칸이 최종 당첨입니다.</div>
+      </div>
 
-  <div>
-    <input type="text" id="menuInput" placeholder="메뉴 입력" />
-    <button onclick="addMenu()">추가</button>
+      <!-- Map & List Card -->
+      <div class="card">
+        <div class="row">
+          <input type="text" id="menuInput" placeholder="직접 메뉴 추가 (예: 김치찌개)"/>
+          <button id="addBtn">추가</button>
+          <button id="resetBtn" class="secondary">룰렛 초기화</button>
+        </div>
+        <ul id="menuList"></ul>
+        <hr style="border:none;border-top:1px solid #eef;margin:12px 0"/>
+        <div class="row">
+          <input id="keyword" type="text" placeholder="검색어 (예: 국밥, 초밥, 분식, 음식점)"/>
+          <select id="radius">
+            <option value="500">반경 500m</option>
+            <option value="1000" selected>반경 1km</option>
+            <option value="2000">반경 2km</option>
+          </select>
+          <button id="searchBtn" class="secondary">주변 검색</button>
+        </div>
+        <div id="map"></div>
+        <ul id="placeList"></ul>
+        <div class="footer mini">※ 카카오 지도 JS SDK(서비스 라이브러리) 사용. 일부 상점은 메뉴 정보가 없을 수 있어 키워드(음식명)로 검색하는 방식을 병행합니다.</div>
+      </div>
+    </div>
   </div>
 
-  <ul id="menu-list"></ul>
-
-  <button onclick="pickMenu()">뽑기 🎲</button>
-
-  <div id="result"></div>
+  <!-- Kakao Maps SDK: 본인 JavaScript 키로 변경하세요 -->
+  <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=YOUR_KAKAO_JAVASCRIPT_KEY&libraries=services&autoload=false"></script>
 
   <script>
-    const menus = [];
+  (function(){
+    // ========== 룰렛 상태 ==========
+    const LS_KEY = 'lunch-wheel-menus-v2';
+    let menus = loadMenus();
 
-    function addMenu(){
-      const input = document.getElementById("menuInput");
-      const menu = input.value.trim();
-      if(menu){
-        menus.push(menu);
-        renderMenus();
-        input.value = "";
+    // Canvas & drawing
+    const canvas = document.getElementById('wheel');
+    const ctx = canvas.getContext('2d');
+    let angle = 0; // current rotation (rad)
+    const pointerAngle = -Math.PI/2; // top
+    let animStart = 0; let animDur = 0; let startAngle = 0; let targetAngle = 0; let spinning = false;
+
+    // Audio (tick)
+    let audioCtx = null; const ticks = {lastIndex: -1};
+    function clickTick(){ try{ if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)(); const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.type='square'; o.frequency.value=880; g.gain.setValueAtTime(0.12, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime+0.06); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+0.07);}catch(e){} }
+
+    // UI refs
+    const listEl = document.getElementById('menuList');
+    const inputEl = document.getElementById('menuInput');
+    const resultEl = document.getElementById('result');
+    const addBtn = document.getElementById('addBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const spinBtn = document.getElementById('spinBtn');
+
+    // 지도/검색 refs
+    const mapEl = document.getElementById('map');
+    const kwEl = document.getElementById('keyword');
+    const radiusEl = document.getElementById('radius');
+    const searchBtn = document.getElementById('searchBtn');
+    const placeList = document.getElementById('placeList');
+
+    // ========== 저장 함수 ==========
+    function saveMenus(){ localStorage.setItem(LS_KEY, JSON.stringify(menus)); }
+    function loadMenus(){ try{ return JSON.parse(localStorage.getItem(LS_KEY)||'[]'); }catch(e){ return []; } }
+    function colorAt(i){ const pal=['#6c8cff','#7dd3fc','#34d399','#fbbf24','#fb7185','#a78bfa']; return pal[i%pal.length]; }
+    function arcSize(){ return (menus.length>0) ? (Math.PI*2/menus.length) : Math.PI*2; }
+
+    // ========== 그리기 ==========
+    function drawWheel(){
+      const dpr = window.devicePixelRatio||1; const size = Math.min(canvas.clientWidth||560, 560);
+      if(canvas.width !== size*dpr){ canvas.width = size*dpr; canvas.height = size*dpr; }
+      const r = Math.min(canvas.width, canvas.height)/2 - 10*dpr; const cx = canvas.width/2, cy = canvas.height/2;
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      ctx.save(); ctx.translate(cx,cy); ctx.rotate(angle);
+      const a = arcSize();
+      for(let i=0;i<Math.max(1,menus.length);i++){
+        const start = i*a; const end = start + a; ctx.beginPath(); ctx.moveTo(0,0); ctx.arc(0,0,r,start,end); ctx.closePath(); ctx.fillStyle = menus.length? colorAt(i): '#e5e7eb'; ctx.fill(); ctx.strokeStyle='rgba(0,0,0,.12)'; ctx.lineWidth=2*dpr; ctx.stroke();
+        if(menus.length){ ctx.save(); const mid = start + a/2; ctx.rotate(mid); ctx.translate(r*0.68,0); ctx.rotate(Math.PI/2); ctx.fillStyle='#111'; ctx.font=`${14*dpr}px system-ui,-apple-system,Segoe UI,Roboto,Arial`; ctx.textAlign='center'; ctx.textBaseline='middle'; fitText(menus[i], r*0.9, 16*dpr); ctx.restore(); }
       }
+      ctx.beginPath(); ctx.arc(0,0,26*dpr,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill(); ctx.lineWidth=3*dpr; ctx.strokeStyle='rgba(0,0,0,.18)'; ctx.stroke();
+      ctx.restore();
     }
+    function fitText(text, maxWidth, maxFont){ let size = maxFont; ctx.font = `${size}px system-ui,-apple-system,Segoe UI,Roboto,Arial`; while(ctx.measureText(text).width > maxWidth && size>10){ size -= 1; ctx.font = `${size}px system-ui,-apple-system,Segoe UI,Roboto,Arial`; } ctx.fillText(text,0,0); }
+    function currentIndex(){ if(!menus.length) return -1; const a = arcSize(); const rel = ((-Math.PI/2 - angle) % (Math.PI*2) + Math.PI*2)%(Math.PI*2); return Math.floor(rel / a); }
 
-    function renderMenus(){
-      const list = document.getElementById("menu-list");
-      list.innerHTML = "";
-      menus.forEach((menu,i)=>{
-        const li = document.createElement("li");
-        li.textContent = menu;
-        list.appendChild(li);
+    function spinTo(index){ const a = arcSize(); const mid = index*a + a/2; const TAU = Math.PI*2; const base = -Math.PI/2 - mid; const turns = (5 + Math.floor(Math.random()*4)); startAngle = angle; targetAngle = base - turns*TAU; animDur = 4200 + Math.random()*1200; animStart = performance.now(); spinning = true; spinBtn.disabled = true; requestAnimationFrame(tick); }
+    function easeOutCubic(t){ return 1 - Math.pow(1-t, 3); }
+    function tick(now){ if(!spinning){ drawWheel(); return; } const t = Math.min(1, (now - animStart)/animDur); const e = easeOutCubic(t); angle = startAngle + (targetAngle - startAngle)*e; const idx = currentIndex(); if(idx !== ticks.lastIndex){ if(t>0.02) clickTick(); ticks.lastIndex = idx; } drawWheel(); if(t < 1){ requestAnimationFrame(tick); } else { spinning = false; spinBtn.disabled = false; const sel = currentIndex(); if(sel>=0) resultEl.textContent = `오늘의 점심은 → ${menus[sel]}!`; } }
+
+    // ========== 리스트 UI ==========
+    function renderList(){ listEl.innerHTML = ''; if(menus.length===0){ listEl.innerHTML = '<li class="tag">메뉴를 추가해 주세요.</li>'; } menus.forEach((m,i)=>{ const li=document.createElement('li'); const left=document.createElement('div'); left.textContent=m; const right=document.createElement('div'); const del=document.createElement('button'); del.textContent='삭제'; del.className='secondary'; del.onclick=()=>{ menus.splice(i,1); saveMenus(); renderList(); drawWheel(); }; right.appendChild(del); li.appendChild(left); li.appendChild(right); listEl.appendChild(li); }); resultEl.textContent = menus.length? '돌릴 준비 완료!':'메뉴를 추가하거나, 우측에서 주변 가게를 검색해 추가해보세요.'; }
+    function addMenu(){ const v=inputEl.value.trim(); if(!v) return; menus.push(v); inputEl.value=''; saveMenus(); renderList(); drawWheel(); }
+
+    addBtn.addEventListener('click', addMenu);
+    inputEl.addEventListener('keydown', e=>{ if(e.key==='Enter') addMenu();});
+    resetBtn.addEventListener('click', ()=>{ angle = 0; drawWheel(); resultEl.textContent = '룰렛 위치 초기화 완료!'; });
+    spinBtn.addEventListener('click', ()=>{ if(menus.length<2){ resultEl.textContent = '메뉴를 2개 이상 등록해 주세요!'; return; } let idx = Math.floor(Math.random()*menus.length); const cur = currentIndex(); if(menus.length>1 && idx===cur) idx=(idx+1)%menus.length; spinTo(idx); });
+
+    // 초기화
+    renderList(); drawWheel(); new ResizeObserver(()=> drawWheel()).observe(canvas);
+
+    // ========== 카카오 지도 ==========
+    let map, ps, markers=[];
+    const defaultCenter = { lat:37.5665, lng:126.9780 }; // 서울 시청 근처 (권한 거부 대비)
+
+    function initMap(){
+      kakao.maps.load(()=>{
+        // 현재 위치 시도
+        getCurrentPosition().then(pos=>({lat:pos.coords.latitude,lng:pos.coords.longitude})).catch(()=>defaultCenter).then(center=>{
+          map = new kakao.maps.Map(mapEl, { center: new kakao.maps.LatLng(center.lat, center.lng), level:4 });
+          ps = new kakao.maps.services.Places();
+          addMarker(center.lat, center.lng, true);
+        });
       });
     }
 
-    function pickMenu(){
-      if(menus.length === 0){
-        document.getElementById("result").textContent = "먼저 메뉴를 추가해주세요!";
-        return;
-      }
-      const randomIndex = Math.floor(Math.random()*menus.length);
-      const chosen = menus[randomIndex];
-      document.getElementById("result").textContent = "오늘의 점심은 → " + chosen + "!";
+    function getCurrentPosition(){ return new Promise((res,rej)=>{ if(!navigator.geolocation) return rej(); navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy:true, timeout:6000 }); }); }
+
+    function addMarker(lat, lng, isCenter){ const pos = new kakao.maps.LatLng(lat,lng); const m = new kakao.maps.Marker({ position: pos, map }); if(isCenter){ const circle = new kakao.maps.Circle({ center: pos, radius: Number(radiusEl.value), strokeWeight:1, strokeColor:'#668', strokeOpacity:0.9, strokeStyle:'dashed', fillColor:'#aab7ff', fillOpacity:0.08 }); circle.setMap(map); setTimeout(()=> circle.setMap(null), 3500); }
+      markers.push(m); return m; }
+
+    function clearMarkers(){ markers.forEach(m=> m.setMap(null)); markers = []; }
+
+    function searchPlaces(){ if(!ps) return; const kw = (kwEl.value||'음식점').trim(); if(!kw){ kwEl.focus(); return; }
+      getMapCenter().then(center=>{
+        const radius = Number(radiusEl.value)||1000;
+        const options = { location: new kakao.maps.LatLng(center.lat, center.lng), radius, size:15, sort:kakao.maps.services.SortBy.DISTANCE };
+        ps.keywordSearch(kw, (data, status)=>{
+          if(status !== kakao.maps.services.Status.OK){ placeList.innerHTML = '<li class="tag">검색 결과가 없습니다.</li>'; return; }
+          renderPlaces(data, center);
+        }, options);
+      });
     }
+
+    function getMapCenter(){ return new Promise((r)=>{ const c = map.getCenter(); r({lat: c.getLat(), lng: c.getLng()}); }); }
+
+    function renderPlaces(items, center){ clearMarkers(); placeList.innerHTML = '';
+      const bounds = new kakao.maps.LatLngBounds();
+      items.forEach((p,i)=>{
+        const lat = Number(p.y), lng = Number(p.x); const mark = addMarker(lat,lng,false); bounds.extend(new kakao.maps.LatLng(lat,lng));
+        const li = document.createElement('li');
+        const left = document.createElement('div'); left.innerHTML = `<div><b>${p.place_name}</b></div><div class="mini">${p.road_address_name||p.address_name||''}</div>`;
+        const right = document.createElement('div');
+        const add = document.createElement('button'); add.textContent = '룰렛에 추가'; add.className='secondary';
+        add.onclick = ()=>{ const kw = kwEl.value.trim(); const label = kw? `${kw} @ ${p.place_name}` : p.place_name; menus.push(label); saveMenus(); renderList(); drawWheel(); };
+        right.appendChild(add);
+        li.appendChild(left); li.appendChild(right);
+        placeList.appendChild(li);
+        kakao.maps.event.addListener(mark, 'click', ()=>{ map.panTo(new kakao.maps.LatLng(lat,lng)); });
+      });
+      if(!bounds.isEmpty()) map.setBounds(bounds);
+    }
+
+    // 이벤트
+    searchBtn.addEventListener('click', searchPlaces);
+    kwEl.addEventListener('keydown', e=>{ if(e.key==='Enter') searchPlaces(); });
+
+    // SDK 준비
+    if(window.kakao && window.kakao.maps){ initMap(); } else { console.warn('Kakao SDK not loaded'); }
+  })();
   </script>
 </body>
 </html>
