@@ -61,6 +61,9 @@
   th{background:#0f1a2a;color:#9fb0c7;text-align:left;position:sticky;top:0}
   .row{display:flex;align-items:center;justify-content:space-between;background:#0d1526;border:1px solid var(--line);border-radius:12px;padding:8px 10px;margin:6px}
   .name{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #plBody { color: var(--fg); }
+  #plBody .name { color: var(--fg); }
+  #plBody button { background:#13233d; color:var(--fg); border:1px solid var(--line); border-radius:10px; padding:6px 10px; }
 </style>
 </head>
 <body>
@@ -149,7 +152,8 @@ els.audio.addEventListener("ended", ()=>{ els.playIcon.textContent="▶️"; nex
 els.audio.addEventListener("timeupdate", ()=> els.time.textContent=`${fmt(els.audio.currentTime)} / ${fmt(els.audio.duration||0)}`);
 
 els.btnFiles.onclick=()=>els.dlgFiles.showModal(); els.closeFiles.onclick=()=>els.dlgFiles.close();
-els.btnPl.onclick=()=>{ renderPl(); els.dlgPl.showModal(); }; els.closePl.onclick=()=>els.dlgPl.close();
+els.btnPl.onclick=()=>{ renderPl(); els.dlgPl.showModal(); };
+els.closePl.onclick=()=>els.dlgPl.close();
 els.btnPrev.onclick=prev; els.btnNext.onclick=next; els.btnToggle.onclick=togglePlay;
 
 loadFiles().catch(e=>{ console.error(e); alert("파일 목록을 불러오지 못했습니다. GitHub 설정을 확인하세요."); });
