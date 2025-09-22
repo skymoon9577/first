@@ -1,64 +1,98 @@
-<!DOCTYPE html><html lang="ko"><head>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
 <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Music · Circle UI [답변:3]</title>
+<title>Music · 9x9 Grid (Full-cell + Lines)</title>
 <style>
-:root{--bg:#0b1220;--fg:#e9eef6;--muted:#9fb0c7;--line:#1f2b3f;--btn:#13233d;--btnh:#1a2f50;--ui:0.95;}
-html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial}
-.stage{min-width:300px;min-height:400px;height:100dvh;display:grid;place-items:center;padding:10px}
-.top{position:fixed;top:10px;left:50%;transform:translateX(-50%);width:min(92vw,640px);display:grid;gap:8px}
-.box{height:32px;border:1.5px solid var(--fg);border-radius:8px;display:grid;place-items:center;background:#0d1526}
-#title{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 10px}
-#time{font-size:12px;color:var(--muted)}
-.dial{width:calc(min(92vw,640px)*var(--ui));height:calc(min(92vw,640px)*var(--ui));max-height:calc(min(92vh,640px)*var(--ui));
-      min-width:300px;min-height:300px;border:2px solid var(--fg);border-radius:50%;position:relative;display:grid;place-items:center;box-sizing:border-box;margin-top:100px}
-.dial.debug{background:
-  linear-gradient(transparent 95%, rgba(255,0,0,.35) 0) 0 0/ calc(100%/8) calc(100%/8),
-  linear-gradient(90deg, transparent 95%, rgba(255,0,0,.35) 0) 0 0/ calc(100%/8) calc(100%/8);}
-.core{position:absolute;inset:10% 22%;border-left:2px solid var(--fg);border-right:2px solid var(--fg);
-      display:grid;grid-template-rows:1fr 1.2fr 1fr;align-items:center}
-.slot{display:grid;place-items:center;border-top:2px solid var(--fg)} .slot:first-child{border-top:none}
-.side{position:absolute;top:50%;transform:translateY(-50%)} .side.left{left:4%} .side.right{right:4%}
-button{background:var(--btn);color:var(--fg);border:1px solid var(--line);border-radius:12px;cursor:pointer}
-button:hover{background:var(--btnh)}
-.round{width:calc(56px*var(--ui));height:calc(56px*var(--ui));display:grid;place-items:center;border-radius:999px;font-size:calc(22px*var(--ui))}
-.small{width:calc(46px*var(--ui));height:calc(46px*var(--ui));font-size:calc(20px*var(--ui))}
-</style></head><body>
+  :root{ --bg:#0b1220; --fg:#e9eef6; --muted:#9fb0c7; --line:#1f2b3f; --ui:1; }
+  html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial}
+  .stage{min-width:150px;min-height:150px;height:100dvh;display:grid;place-items:center;padding:10px}
+
+  /* 상단 2박스 */
+  .top{position:fixed;top:10px;left:50%;transform:translateX(-50%);width:min(92vw,640px);display:grid;gap:8px}
+  .box{height:32px;border:1.5px solid var(--fg);border-radius:8px;background:#0d1526;display:grid;place-items:center}
+  #title{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 10px}
+  #time{font-size:12px;color:var(--muted)}
+
+  /* 원형 컨테이너 */
+  .dial{
+    width:calc(min(92vw,640px)*var(--ui));
+    height:calc(min(92vw,640px)*var(--ui));
+    max-height:calc(min(92vh,640px)*var(--ui));
+    min-width:150px; min-height:150px;
+    border:2px solid var(--fg); border-radius:50%;
+    position:relative; display:grid; place-items:center; box-sizing:border-box; margin-top:100px;
+  }
+  /* 9x9 그리드 */
+  .grid{
+    width:86%; height:86%;
+    display:grid; grid-template-columns:repeat(9,1fr); grid-template-rows:repeat(9,1fr);
+    align-items:stretch; justify-items:stretch; /* ★ 셀 가득 */
+    position:relative; border-radius:50%; overflow:hidden;
+  }
+  /* 디버그 격자 (원하면 .debug 추가) */
+  .grid.debug{
+    background:
+      repeating-linear-gradient(0deg, transparent 0 calc(100%/9 - 1px), rgba(255,0,0,.35) 0 calc(100%/9)),
+      repeating-linear-gradient(90deg, transparent 0 calc(100%/9 - 1px), rgba(255,0,0,.35) 0 calc(100%/9));
+  }
+
+  /* 내부 구획선: 그리드 라인에 맞춘 세로/가로 라인 */
+  .vline, .hline{background:var(--fg); opacity:.9}
+  .vline{width:2px; grid-row:1 / -1; justify-self:stretch; align-self:stretch}
+  .v3{grid-column:4} /* 3번째 세로 라인 */
+  .v7{grid-column:7} /* 7번째 세로 라인 */
+  .hline{height:2px; grid-column:1 / -1; justify-self:stretch; align-self:stretch}
+  .h4{grid-row:4}    /* 4번째 가로 라인 */
+  .h6{grid-row:7}    /* 6번째 가로 라인 */
+
+  /* 버튼: 한 칸 가득 채우기 */
+  button{background:#13233d;color:#e9eef6;border:1px solid var(--line);border-radius:12px;cursor:pointer;width:100%;height:100%;display:grid;place-items:center}
+  button:hover{background:#1a2f50}
+  /* 아이콘 크기: 셀 크기에 자동 반응 */
+  .icon{font-size:clamp(16px, 6vmin, 28px); line-height:1}
+
+  dialog{border:none;border-radius:16px;background:#0e1626;color:var(--fg);padding:0;max-width:min(860px,95vw)}
+  dialog::backdrop{background:rgba(0,0,0,.55)}
+  .m-head{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line)}
+  .m-body{max-height:64vh;overflow:auto}
+  table{width:100%;border-collapse:collapse}
+  th,td{padding:10px 12px;border-bottom:1px solid var(--line);font-size:14px}
+  th{background:#0f1a2a;color:#9fb0c7;text-align:left;position:sticky;top:0}
+  .row{display:flex;align-items:center;justify-content:space-between;background:#0d1526;border:1px solid var(--line);border-radius:12px;padding:8px 10px;margin:6px}
+  .name{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+</style>
+</head>
+<body>
 <div class="stage">
   <div class="top">
     <div class="box"><div id="title">-</div></div>
     <div class="box"><div id="time">00:00 / 00:00</div></div>
   </div>
 
-  <div class="dial" id="dial">
-    <div class="side left"><button id="btnPrev" class="round small" title="이전">⏮️</button></div>
-    <div class="side right"><button id="btnNext" class="round small" title="다음">⏭️</button></div>
+  <div class="dial">
+    <div id="grid" class="grid">
+      <!-- 내부 구획선(그리드 정렬) -->
+      <div class="vline v3"></div>
+      <div class="vline v7"></div>
+      <div class="hline h4"></div>
+      <div class="hline h6"></div>
 
-    <div class="core">
-      <div class="slot"><button id="btnFiles" class="round small" title="파일리스트">📁</button></div>
-      <div class="slot"><button id="btnToggle" class="round" title="플레이/정지">▶️</button></div>
-      <div class="slot"><button id="btnPl" class="round small" title="플레이리스트">🎵</button></div>
+      <!-- 좌표 배치 -->
+      <button id="btnPrev" style="grid-column:2; grid-row:5" title="이전"><span class="icon">⏮️</span></button>
+      <button id="btnNext" style="grid-column:8; grid-row:5" title="다음"><span class="icon">⏭️</span></button>
+      <button id="btnToggle" style="grid-column:5; grid-row:5" title="플레이/정지"><span class="icon" id="playIcon">▶️</span></button>
+      <button id="btnFiles" style="grid-column:5; grid-row:2" title="파일리스트"><span class="icon">📁</span></button>
+      <button id="btnPl"    style="grid-column:5; grid-row:8" title="플레이리스트"><span class="icon">🎵</span></button>
     </div>
   </div>
 </div>
 
-<dialog id="dlgFiles">
-  <div style="padding:12px 14px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center">
-    <strong>파일리스트</strong><button id="closeFiles">닫기</button>
-  </div>
-  <div style="max-height:64vh;overflow:auto">
-    <table style="width:100%;border-collapse:collapse">
-      <thead><tr><th style="text-align:left;padding:10px 12px;border-bottom:1px solid var(--line)">파일명</th><th style="width:110px;padding:10px 12px;border-bottom:1px solid var(--line)">추가</th></tr></thead>
-      <tbody id="fileTable"></tbody>
-    </table>
-  </div>
-</dialog>
-
-<dialog id="dlgPl">
-  <div style="padding:12px 14px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center">
-    <strong>플레이리스트</strong><button id="closePl">닫기</button>
-  </div>
-  <div id="plBody" style="max-height:64vh;overflow:auto;padding:6px"></div>
-</dialog>
+<!-- 파일리스트/플레이리스트 모달 -->
+<dialog id="dlgFiles"><div class="m-head"><strong>파일리스트</strong><button id="closeFiles">닫기</button></div>
+  <div class="m-body"><table><thead><tr><th>파일명</th><th style="width:110px">추가</th></tr></thead><tbody id="fileTable"></tbody></table></div></dialog>
+<dialog id="dlgPl"><div class="m-head"><strong>플레이리스트</strong><button id="closePl">닫기</button></div>
+  <div id="plBody" class="m-body" style="padding:6px"></div></dialog>
 
 <audio id="audio" preload="metadata"></audio>
 
@@ -73,57 +107,52 @@ const $=s=>document.querySelector(s);
 const els={audio:$("#audio"),title:$("#title"),time:$("#time"),
   dlgFiles:$("#dlgFiles"),fileTable:$("#fileTable"),closeFiles:$("#closeFiles"),
   dlgPl:$("#dlgPl"),plBody:$("#plBody"),closePl:$("#closePl"),
-  btnFiles:$("#btnFiles"),btnPrev:$("#btnPrev"),btnToggle:$("#btnToggle"),btnNext:$("#btnNext"),btnPl:$("#btnPl")
-};
+  btnFiles:$("#btnFiles"),btnPrev:$("#btnPrev"),btnToggle:$("#btnToggle"),btnNext:$("#btnNext"),btnPl:$("#btnPl"),
+  playIcon:$("#playIcon")};
 const state={files:[],playlist:[],idx:-1};
+
 function fmt(t){if(!isFinite(t))return"00:00";const m=Math.floor(t/60),s=Math.floor(t%60);return`${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;}
 
 async function loadFiles(){const r=await fetch(apiURL());if(!r.ok)throw new Error("GitHub API 오류: "+r.status);
-  const data=await r.json();state.files=(Array.isArray(data)?data:[]).filter(x=>x.type==="file"&&isAudio(x.name)).map(x=>({name:x.name,url:x.download_url})); renderFileTable(); }
+  const data=await r.json(); state.files=(Array.isArray(data)?data:[]).filter(f=>f.type==="file"&&isAudio(f.name)).map(f=>({name:f.name,url:f.download_url})); renderFileTable(); }
 function renderFileTable(){
-  els.fileTable.innerHTML=""; if(!state.files.length){els.fileTable.innerHTML=`<tr><td colspan="2" style="padding:12px">오디오가 없습니다.</td></tr>`;return;}
+  els.fileTable.innerHTML=""; if(!state.files.length){ els.fileTable.innerHTML=`<tr><td colspan="2">오디오가 없습니다.</td></tr>`; return; }
   for(const f of state.files){
     const tr=document.createElement("tr");
-    tr.innerHTML=`<td style="padding:10px 12px;border-bottom:1px solid var(--line)">${f.name}</td>
-                  <td style="padding:10px 12px;border-bottom:1px solid var(--line)"><button>추가</button></td>`;
-    tr.querySelector("button").onclick=()=>addToPlaylist(f); els.fileTable.appendChild(tr);
+    tr.innerHTML=`<td>${f.name}</td><td><button>추가</button></td>`;
+    tr.querySelector("button").onclick=()=>addToPlaylist(f);
+    els.fileTable.appendChild(tr);
   }
 }
-function addToPlaylist(it){ if(!state.playlist.find(x=>x.url===it.url)){ state.playlist.push({...it}); renderPl(); if(state.idx===-1){state.idx=0; loadIndex(0);} } }
+function addToPlaylist(it){ if(!state.playlist.find(x=>x.url===it.url)){ state.playlist.push({...it}); renderPl(); if(state.idx===-1){ state.idx=0; loadIndex(0);} } }
 function removeFromPlaylist(url){ const i=state.playlist.findIndex(x=>x.url===url); if(i>=0){ state.playlist.splice(i,1); if(state.idx>=state.playlist.length) state.idx=state.playlist.length-1; renderPl(); } }
 function renderPl(){
   const b=els.plBody; b.innerHTML="";
-  if(!state.playlist.length){ b.innerHTML=`<div style="padding:10px 12px">플레이리스트 비어있음</div>`; els.title.textContent="-"; els.audio.removeAttribute("src"); els.time.textContent="00:00 / 00:00"; els.btnToggle.textContent="▶️"; return; }
+  if(!state.playlist.length){ b.innerHTML=`<div class="row"><div class="name">플레이리스트 비어있음</div></div>`; els.title.textContent="-"; els.audio.removeAttribute("src"); els.time.textContent="00:00 / 00:00"; els.playIcon.textContent="▶️"; return; }
   state.playlist.forEach((it,i)=>{
-    const row=document.createElement("div"); row.style.cssText="display:flex;align-items:center;justify-content:space-between;background:#0d1526;border:1px solid var(--line);border-radius:12px;padding:8px 10px;margin:6px";
-    const name=document.createElement("div"); name.style.cssText="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis";
-    name.textContent=(i===state.idx?"▶ ":"")+it.name;
+    const row=document.createElement("div"); row.className="row";
+    const name=document.createElement("div"); name.className="name"; name.textContent=(i===state.idx?"▶ ":"")+it.name;
     const del=document.createElement("button"); del.textContent="삭제"; del.onclick=()=>removeFromPlaylist(it.url);
     row.onclick=(e)=>{ if(e.target===del) return; state.idx=i; loadIndex(i,true); };
     row.append(name,del); b.appendChild(row);
   });
 }
-function loadIndex(i,auto=false){ if(i<0||i>=state.playlist.length){ els.title.textContent="-"; els.audio.removeAttribute("src"); els.time.textContent="00:00 / 00:00"; els.btnToggle.textContent="▶️"; return; }
+function loadIndex(i,auto=false){ if(i<0||i>=state.playlist.length){ els.title.textContent="-"; els.audio.removeAttribute("src"); els.time.textContent="00:00 / 00:00"; els.playIcon.textContent="▶️"; return; }
   const it=state.playlist[i]; els.title.textContent=it.name; els.audio.src=it.url; if(auto) els.audio.play(); renderPl(); }
 function prev(){ if(!state.playlist.length) return; state.idx=(state.idx-1+state.playlist.length)%state.playlist.length; loadIndex(state.idx,true); }
 function next(){ if(!state.playlist.length) return; state.idx=(state.idx+1)%state.playlist.length; loadIndex(state.idx,true); }
-function togglePlay(){
-  if(!els.audio.src){ if(state.idx===-1 && state.playlist.length){ state.idx=0; loadIndex(0,true);} return; }
-  if(els.audio.paused){ els.audio.play(); } else { els.audio.pause(); els.audio.currentTime=0; }
-}
-/* 중앙 토글 아이콘 상태 동기화 */
-els.audio.addEventListener("play", ()=> els.btnToggle.textContent="⏹️");
-els.audio.addEventListener("pause", ()=> els.btnToggle.textContent="▶️");
-els.audio.addEventListener("ended", ()=>{ els.btnToggle.textContent="▶️"; next(); });
+function togglePlay(){ if(!els.audio.src){ if(state.idx===-1 && state.playlist.length){ state.idx=0; loadIndex(0,true);} return; } if(els.audio.paused){ els.audio.play(); } else { els.audio.pause(); els.audio.currentTime=0; } }
+
+els.audio.addEventListener("play", ()=> els.playIcon.textContent="⏹️");
+els.audio.addEventListener("pause", ()=> els.playIcon.textContent="▶️");
+els.audio.addEventListener("ended", ()=>{ els.playIcon.textContent="▶️"; next(); });
 els.audio.addEventListener("timeupdate", ()=> els.time.textContent=`${fmt(els.audio.currentTime)} / ${fmt(els.audio.duration||0)}`);
 
 els.btnFiles.onclick=()=>els.dlgFiles.showModal(); els.closeFiles.onclick=()=>els.dlgFiles.close();
 els.btnPl.onclick=()=>{ renderPl(); els.dlgPl.showModal(); }; els.closePl.onclick=()=>els.dlgPl.close();
 els.btnPrev.onclick=prev; els.btnNext.onclick=next; els.btnToggle.onclick=togglePlay;
-/* 키보드 */
-window.addEventListener("keydown",(e)=>{ if(["INPUT","TEXTAREA"].includes(e.target.tagName)) return;
-  if(e.code==="Space"){ e.preventDefault(); togglePlay(); } else if(e.key==="ArrowLeft"){ prev(); } else if(e.key==="ArrowRight"){ next(); } });
 
 loadFiles().catch(e=>{ console.error(e); alert("파일 목록을 불러오지 못했습니다. GitHub 설정을 확인하세요."); });
 </script>
-</body></html>
+</body>
+</html>
