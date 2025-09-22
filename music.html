@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Music · GitHub Assets Player — v[답변:1]</title>
+<style>
+  :root{
+    --bg:#0b1220; --fg:#e9eef6; --muted:#9fb0c7; --acc:#7bdcff; --good:#7bf0b9;
+    --card:#0e1729; --line:#1f2b3f; --btn:#13233d; --btnh:#1a3052;
+  }
+  html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font-family:ui-sans-serif,system-ui,Segoe UI,Roboto,Helvetica,Arial}
+  .wrap{padding:16px 16px 92px}
+  h1{margin:12px 0 8px;font-size:20px}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:10px}
+  .now{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+  .now b{color:var(--good)}
+  #title{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* playlist list */
+  #playlist{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+  .row{display:flex;gap:10px;align-items:center;justify-content:space-between;background:#0d1526;border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+  .name{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .badge{font-size:12px;color:var(--muted)}
+  button{background:var(--btn);border:1px solid var(--line);color:var(--fg);padding:9px 12px;border-radius:12px;cursor:pointer}
+  button:hover{background:var(--btnh)}
+  /* bottom bar */
+  .bar{position:fixed;left:0;right:0;bottom:0;display:flex;align-items:center;gap:10px;padding:10px 12px;background:#0c1424;border-top:1px solid var(--line)}
+  .icon{width:24px;height:24px;display:grid;place-items:center}
+  .round{width:42px;height:42px;border-radius:999px;display:grid;place-items:center}
+  .grow{flex:1}
+  /* modal */
+  dialog{border:none;border-radius:16px;background:var(--card);color:var(--fg);padding:0;max-width:min(820px,94vw)}
+  dialog::backdrop{background:rgba(0,0,0,.55)}
+  .modal-head{display:flex;gap:8px;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line)}
+  .modal-tools{display:flex;gap:8px;align-items:center}
+  .search{display:flex;align-items:center;background:#0c1528;border:1px solid var(--line);border-radius:10px;padding:6px 8px}
+  .search input{all:unset;color:var(--fg);width:180px}
+  .modal-body{max-height:62vh;overflow:auto}
+  table{width:100%;border-collapse:collapse}
+  th,td{padding:10px 12px;border-bottom:1px solid var(--line);font-size:14px}
+  th{text-align:left;color:var(--muted);font-weight:600;background:#0f1a2a;position:sticky;top:0}
+  .empty{padding:24px;color:var(--muted)}
+  @media (max-width:600px){
+    .round{width:38px;height:38px}
+    .wrap{padding-bottom:110px}
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>GitHub Assets 음악 플레이어</h1>
+    <div class="sub">폴더 아이콘(📁)으로 파일리스트를 열어 원하는 곡을 플레이리스트에 추가하세요.</div>
+    <div class="now"><b>Now</b><span id="title">-</span></div>
+    <div id="playlist"></div>
+  </div>
+
+  <!-- bottom controls -->
+  <div class="bar">
+    <button id="btnFiles" class="round" title="파일리스트(폴더)">📁</button>
+    <div class="grow"></div>
+    <button id="btnPrev" class="round" title="이전">⏮️</button>
+    <button id="btnStop" class="round" title="정지">⏹️</button>
+    <button id="btnPlay" class="round" title="재생/일시정지">▶️/⏸️</button>
+    <button id="btnNext" class="round" title="다음">⏭️</button>
+    <div class="grow"></div>
+    <button id="btnPl" class="round" title="플레이리스트 보기/숨김">🎵</button>
+  </div>
+
+  <!-- files modal -->
+  <dialog id="dlgFiles">
+    <div class="modal-head">
+      <strong>파일리스트</strong>
+      <div class="modal-tools">
+        <div class="search">
+          🔎 <input id="q" placeholder="이름 검색" />
+        </div>
+        <button id="sortName">이름순</button>
+        <button id="sortExt">확장자</button>
+        <button id="closeFiles">닫기</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <table>
+        <thead><tr><th>파일명</th><th style="width:120px">추가</th></tr></thead>
+        <tbody id="fileTable"></tbody>
+      </table>
+      <div id="empty" class="empty" style="display:none">목록이 비었습니다.</div>
+    </div>
+  </dialog>
+
+  <audio id="audio" preload="metadata"></audio>
+
+<script>
+/* === 0) 깃허브 설정 ===
+   아래 4가지를 여러분 레포에 맞게 변경하세요. (예: owner:'yourname', repo:'assets', path:'music', branch:'main') */
+const GH = { owner:"YOUR_GITHUB_ID", repo:"assets", path:"", branch:"main" };
+
+/* 확장자 화이트리스트 */
+const AUDIO_EXT = [".mp3",".m4a",".aac",".wav",".ogg",".flac"];
+const isAudio = name => AUDIO_EXT.some(ext => name.toLowerCase().endsWith(ext));
+const apiURL = () => `https://api.github.com/repos/${GH.owner}/${GH.repo}/contents/${GH.path}?ref=${encodeURIComponent(GH.branch)}`;
+
+/* === 상태 === */
+const state = {
+  allFiles: [],            // {name,url,ext}
+  viewFiles: [],           // 검색/정렬 반영 뷰
+  playlist: [],            // {name,url}
+  idx: -1,
+};
+
+/* === 요소 === */
+const $ = sel => document.querySelector(sel);
+const els = {
+  audio: $("#audio"),
+  title: $("#title"),
+  pl: $("#playlist"),
+  dlg: $("#dlgFiles"),
+  table: $("#fileTable"),
+  empty: $("#empty"),
+  q: $("#q"),
+  sortName: $("#sortName"),
+  sortExt: $("#sortExt"),
+  btnFiles: $("#btnFiles"),
+  btnPrev: $("#btnPrev"),
+  btnStop: $("#btnStop"),
+  btnPlay: $("#btnPlay"),
+  btnNext: $("#btnNext"),
+  btnPl: $("#btnPl"),
+  btnClose: $("#closeFiles"),
+};
+
+/* === 로컬 저장 === */
+const LS_KEY = "gh_music_playlist_v1";
+function savePlaylist(){ localStorage.setItem(LS_KEY, JSON.stringify(state.playlist)); }
+function loadPlaylist(){
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (raw) state.playlist = JSON.parse(raw) || [];
+  } catch {}
+}
+
+/* === 파일 로딩 === */
+async function loadFiles(){
+  const res = await fetch(apiURL());
+  if (!res.ok) throw new Error("GitHub API 오류: " + res.status);
+  const data = await res.json();
+  state.allFiles = (Array.isArray(data)?data:[])
+    .filter(it => it.type==="file" && isAudio(it.name))
+    .map(it => {
+      const name = it.name;
+      const ext = name.slice(name.lastIndexOf(".")+1).toLowerCase();
+      return { name, url: it.download_url, ext };
+    });
+  applySearchSort();
+}
+
+/* === 검색/정렬 === */
+function applySearchSort(){
+  const q = (els.q.value||"").trim().toLowerCase();
+  state.viewFiles = state.allFiles.filter(f => f.name.toLowerCase().includes(q));
+  renderFiles();
+}
+function sortByName(){ state.viewFiles.sort((a,b)=> a.name.localeCompare(b.name, 'ko')); renderFiles(); }
+function sortByExt(){ state.viewFiles.sort((a,b)=> a.ext.localeCompare(b.ext)||a.name.localeCompare(b.name,'ko')); renderFiles(); }
+
+/* === 파일 테이블 렌더 === */
+function renderFiles(){
+  els.table.innerHTML = "";
+  if (!state.viewFiles.length){ els.empty.style.display="block"; return; }
+  els.empty.style.display="none";
+  for (const f of state.viewFiles){
+    const tr = document.createElement("tr");
+    const td1 = document.createElement("td");
+    td1.textContent = f.name;
+    const td2 = document.createElement("td");
+    const btn = document.createElement("button");
+    btn.textContent = "추가";
+    btn.onclick = ()=> addToPlaylist(f);
+    td2.appendChild(btn);
+    tr.append(td1, td2);
+    els.table.appendChild(tr);
+  }
+}
+
+/* === 플레이리스트 === */
+function addToPlaylist(item){
+  if (!state.playlist.find(x=>x.url===item.url)){
+    state.playlist.push({name:item.name, url:item.url});
+    savePlaylist();
+    renderPlaylist();
+    if (state.idx===-1){ state.idx=0; loadIndex(state.idx); }
+  }
+}
+function removeFromPlaylist(url){
+  const i = state.playlist.findIndex(x=>x.url===url);
+  if (i>=0){
+    state.playlist.splice(i,1);
+    if (state.idx >= state.playlist.length) state.idx = state.playlist.length-1;
+    savePlaylist();
+    renderPlaylist();
+  }
+}
+function renderPlaylist(){
+  els.pl.innerHTML = "";
+  if (!state.playlist.length){
+    els.pl.innerHTML = `<div class="row"><div class="name">플레이리스트가 비어 있습니다.</div></div>`;
+    els.title.textContent = "-";
+    els.audio.removeAttribute("src");
+    return;
+  }
+  state.playlist.forEach((it,i)=>{
+    const row = document.createElement("div");
+    row.className = "row";
+    const left = document.createElement("div");
+    left.className = "name";
+    left.textContent = (i===state.idx ? "▶ " : "") + it.name;
+    const right = document.createElement("div");
+    right.innerHTML = `<span class="badge">${i+1}/${state.playlist.length}</span> `;
+    const del = document.createElement("button");
+    del.textContent = "삭제";
+    del.onclick = ()=> removeFromPlaylist(it.url);
+    row.onclick = (e)=>{ if(e.target===del) return; state.idx=i; loadIndex(i, true); };
+    right.appendChild(del);
+    row.append(left,right);
+    els.pl.appendChild(row);
+  });
+}
+
+/* === 재생 제어 === */
+function loadIndex(i, auto=false){
+  if (i<0 || i>=state.playlist.length){ els.title.textContent="-"; els.audio.removeAttribute("src"); return; }
+  const it = state.playlist[i];
+  els.title.textContent = it.name;
+  els.audio.src = it.url;
+  if (auto) els.audio.play();
+  renderPlaylist();
+}
+function prev(){ if (!state.playlist.length) return; state.idx = (state.idx-1+state.playlist.length)%state.playlist.length; loadIndex(state.idx,true); }
+function next(){ if (!state.playlist.length) return; state.idx = (state.idx+1)%state.playlist.length; loadIndex(state.idx,true); }
+function stop(){ els.audio.pause(); els.audio.currentTime=0; }
+function toggle(){ if (!els.audio.src){ if (state.idx===-1 && state.playlist.length){ state.idx=0; loadIndex(0,true);} return; } if (els.audio.paused) els.audio.play(); else els.audio.pause(); }
+
+/* === 바인딩 === */
+els.btnFiles.onclick = ()=> els.dlg.showModal();
+els.btnClose.onclick = ()=> els.dlg.close();
+els.btnPrev.onclick = prev;
+els.btnNext.onclick = next;
+els.btnStop.onclick = stop;
+els.btnPlay.onclick = toggle;
+els.btnPl.onclick = ()=> document.body.classList.toggle("hide-pl"); // 필요시 확장용
+els.audio.addEventListener("ended", next);
+
+els.q.addEventListener("input", applySearchSort);
+els.sortName.onclick = sortByName;
+els.sortExt.onclick = sortByExt;
+
+/* === 시작 === */
+(async()=>{
+  loadPlaylist();
+  renderPlaylist();
+  try{
+    await loadFiles();
+    sortByName();
+  }catch(e){
+    console.error(e);
+    alert("파일 목록을 불러오지 못했습니다. 설정(GH)을 확인하세요.");
+  }
+})();
+</script>
+</body>
+</html>
