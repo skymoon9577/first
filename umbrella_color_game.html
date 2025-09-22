@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>우산 색깔 고르기 게임</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 50px;
+    }
+    h1 {
+      color: #333;
+    }
+    button {
+      padding: 15px 30px;
+      font-size: 18px;
+      border: none;
+      border-radius: 10px;
+      background: #4CAF50;
+      color: white;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    .result {
+      margin-top: 30px;
+      font-size: 24px;
+      font-weight: bold;
+    }
+    .mission {
+      margin-top: 15px;
+      font-size: 20px;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎲 우산 색깔 고르기 게임 🎲</h1>
+  <button onclick="pickColor()">색깔 고르기</button>
+  <div class="result" id="result"></div>
+  <div class="mission" id="mission"></div>
+
+  <script>
+    function pickColor() {
+      const colors = [
+        "빨강", "파랑", "노랑", "초록", "보라", "분홍", "주황", "검정", "하양",
+        "하늘색", "연두", "남색", "갈색", "은색", "금색"
+      ];
+      const missions = {
+        "빨강": "노래 한 소절 부르기 🎤",
+        "파랑": "춤 5초 추기 💃",
+        "노랑": "칭찬 한마디 하기 😊",
+        "초록": "재밌는 표정 짓기 😜",
+        "보라": "좋아하는 음식 말하기 🍕",
+        "분홍": "셀카 찍기 🤳",
+        "주황": "웃긴 얘기 해주기 😂",
+        "검정": "좋아하는 영화 말하기 🎬",
+        "하양": "박수 세 번 치기 👏",
+        "하늘색": "동물 소리 흉내내기 🐶",
+        "연두": "좋아하는 노래 제목 말하기 🎶",
+        "남색": "영어 단어 하나 말하기 🔠",
+        "갈색": "좋아하는 계절 말하기 🍂",
+        "은색": "가위바위보 도전 ✊✋✌",
+        "금색": "즉석 포즈 취하기 📸"
+      };
+
+      const randomColor = colors[Math.floor(Math.random() * colors.length)];
+      document.getElementById("result").innerText = `당신의 우산 색깔은 🎉 ${randomColor} 🎉 입니다!`;
+      document.getElementById("mission").innerText = `미션: ${missions[randomColor]}`;
+    }
+  </script>
+</body>
+</html>
