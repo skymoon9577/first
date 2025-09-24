@@ -59,6 +59,46 @@
     }
     code, pre { background:#f4f4f4; border-radius:8px; padding:2px 6px; }
     .steps ol { margin: 0 0 0 18px; }
+.link .grid, .movie .grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.link-card, .movie-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.link-card:hover, .movie-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+}
+
+.link-card img, .movie-card img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.link-card h3, .movie-card h3 {
+  margin: 8px 12px;
+  font-size: 16px;
+}
+
+.link-card p {
+  margin: 0 12px 12px;
+  font-size: 14px;
+  color: var(--muted);
+}
+    
   </style>
 </head>
 <body>
@@ -121,30 +161,46 @@
       </ol>
       <p style="color:#666">문제가 생기면 어느 단계까지 했는지 숫자로 알려주세요. (예: “2번까지 완료”)</p>
     </section>
-<!-- 링크 추가 -->
-    <section class="card">
-       <a href="./lunch-game/index.html">
-        <div style="border:1px solid #00498c; border-radius:10px;">
-             <div>
-               <img src="./lunch-game/lunch-game.JPG">
-             </div>
-             <div>
-               <h2>점심 게임</h2>  
-               <p>무료 api 지도를 이용해서, 주변 음식점을 랜덤으로 선택하게 함.</p>
-             </div>
-         </div>
-       </a>
+<!-- 링크 소개 (카드형 그리드) -->
+<section class="card link">
+  <h2>Link</h2>
+  <div class="grid">
+    <a href="./lunch-game/index.html" class="link-card">
       <div>
-           <div>
-             <img src="">
-           </div>
-           <div>
-             <h2>점심 게임</h2>  
-             <p>무료 api 지도를 이용해서, 주변 음식점을 랜덤으로 선택하게 함.</p>
-           </div>
-       </div>
-     
-    </section>
+        <img src="./lunch-game/lunch-game.JPG" alt="점심 게임 미리보기" />
+        <h3>점심 게임</h3>
+        <p>무료 API 지도를 이용해서 주변 음식점을 랜덤으로 선택하게 함.</p>
+      </div>
+    </a>
+    <a href="./lunch-game/index.html" class="link-card">
+      <div>
+        <img src="./lunch-game/lunch-game.JPG" alt="점심 게임 미리보기" />
+        <h3>점심 게임</h3>
+        <p>무료 API 지도를 이용해서 주변 음식점을 랜덤으로 선택하게 함.</p>
+      </div>
+    </a>
+    <!-- 여기에 다른 프로젝트 카드 추가 -->
+  </div>
+</section>
+
+<!-- 유튜브 링크 소개 (썸네일 미리보기) -->
+<section class="card movie">
+  <h2>Movie</h2>
+  <div class="grid">
+    <a href="https://www.youtube.com/watch?v=XXXXXXXX" target="_blank" class="movie-card">
+      <img src="https://img.youtube.com/vi/XXXXXXXX/0.jpg" alt="네일 수채화 튜토리얼 썸네일" />
+      <h3>네일 수채화 튜토리얼</h3>
+    </a>
+    <a href="https://www.youtube.com/watch?v=YYYYYYYY" target="_blank" class="movie-card">
+      <img src="https://img.youtube.com/vi/YYYYYYYY/0.jpg" alt="HTML/CSS 기초 강좌 썸네일" />
+      <h3>HTML/CSS 기초 강좌</h3>
+    </a>
+    <a href="https://www.youtube.com/watch?v=ZZZZZZZZ" target="_blank" class="movie-card">
+      <img src="https://img.youtube.com/vi/ZZZZZZZZ/0.jpg" alt="파이썬 크롤링 예제 썸네일" />
+      <h3>파이썬 크롤링 예제 설명</h3>
+    </a>
+  </div>
+</section>
 
 
 
