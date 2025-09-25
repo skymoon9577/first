@@ -3,410 +3,380 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>네일 수채화 갤러리 (데모)</title>
+  <title>네일 수채화 갤러리 (개선본)</title>
   <style>
-    :root {
+    /* ===============================
+       Design Tokens (일관성 핵심)
+       =============================== */
+    :root{
+      /* color */
       --bg: #fafafa;
-      --fg: #222;
-      --muted: #666;
-      --card: #fff;
+      --surface: #ffffff;
+      --text: #222222;
+      --muted: #666666;
       --border: #e6e6e6;
+      --brand: #e60023; /* 빨강 포인트 */
+
+      /* elevation & shape */
       --radius: 16px;
-      --shadow: 0 4px 16px rgba(0,0,0,.06);
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, Apple SD Gothic Neo, Noto Sans KR, '맑은 고딕', sans-serif;
-      background: var(--bg);
-      color: var(--fg);
-      line-height: 1.6;
-      -webkit-font-smoothing: antialiased;
-      text-rendering: optimizeLegibility;
-    }
-    header {
-      position: sticky; top: 0; z-index: 10;
-      background: var(--card);
-      border-bottom: 1px solid var(--border);
-      padding: 12px 16px;
-      display: flex; gap: 12px; align-items: center;
-    }
-    header h1 { margin: 0; font-size: 18px; }
-    main { max-width: 960px; margin: 24px auto; padding: 0 16px; }
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 16px;
-      box-shadow: var(--shadow);
-      margin-bottom: 20px;
-    }
-    .hero img {
-      width: 100%; height: auto; display: block; border-radius: 12px;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 16px;
-    }
-    footer { padding: 24px 16px; text-align: center; color: var(--muted); }
-    code, pre { background:#f4f4f4; border-radius:8px; padding:2px 6px; }
-    .steps ol { margin: 0 0 0 18px; }
+      --inner-radius: 12px;
+      --shadow-sm: 0 2px 10px rgba(0,0,0,.05);
+      --shadow-md: 0 4px 16px rgba(0,0,0,.06);
+      --shadow-lg: 0 6px 18px rgba(0,0,0,.10);
 
-    /* 공통 카드형 */
-    .link-card, .movie-card {
-      display: block;
-      text-decoration: none;
-      color: inherit;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-      transition: transform .2s ease, box-shadow .2s ease;
-    }
-    .link-card:hover, .movie-card:hover,
-    .movie-card:focus-within {
-      transform: translateY(-4px);
-      box-shadow: 0 6px 18px rgba(0,0,0,0.1);
-    }
-    .link-card h3, .movie-card h3 {
-      margin: 8px 12px; font-size: 16px;
-    }
-    .link-card p {
-      margin: 0 12px 12px; font-size: 14px; color: var(--muted);
-    }
-    .thumb img {
-      width: 100%; height: auto; display: block;
+      /* spacing & type scale */
+      --space-1: 8px;
+      --space-2: 12px;
+      --space-3: 16px;
+      --space-4: 20px;
+      --space-6: 24px;
+      --fs-xs: 12px;
+      --fs-sm: 14px;
+      --fs-md: 16px;
+      --fs-lg: 18px;
+      --fs-xl: 22px;
     }
 
-    /* Movie: 카드 내 즉시 재생(레이아웃 점프 방지) */
-    .player-box {
-      position: relative;
-      width: 100%;
-      aspect-ratio: 16 / 9;          /* 고정 비율로 공간 확보 */
-      background: #000;
-      overflow: hidden;
-      border-radius: 8px;
+    /* ===============================
+       Base
+       =============================== */
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple SD Gothic Neo", "Noto Sans KR", "맑은 고딕", sans-serif;
+      line-height:1.6;
+      background:var(--bg);
+      color:var(--text);
+      -webkit-font-smoothing:antialiased;
+      text-rendering:optimizeLegibility;
     }
-    .player-box iframe, .player-box img {
-      position: absolute; inset: 0;
-      width: 100%; height: 100%;
-      object-fit: cover;
-      display: block;
-      border: 0;
-      border-radius: 8px;
+    img{max-width:100%;height:auto;display:block}
+    a{color:inherit}
+
+    /* Focus 가시성 통일 */
+    :focus-visible{outline:3px solid rgba(230,0,35,.35);outline-offset:2px;border-radius:8px}
+
+    /* ===============================
+       Layout
+       =============================== */
+    header.site-header{
+      position:sticky;top:0;z-index:10;
+      background:var(--surface);
+      border-bottom:1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      padding:var(--space-2) var(--space-3);
+      display:flex;gap:var(--space-2);align-items:center
+    }
+    .site-title{margin:0;font-size:var(--fs-lg);font-weight:700}
+    .site-sub{color:var(--muted);font-size:var(--fs-sm)}
+
+    main{max-width:960px;margin:var(--space-6) auto;padding:0 var(--space-3)}
+    footer.site-footer{padding:var(--space-6) var(--space-3);text-align:center;color:var(--muted)}
+
+    /* ===============================
+       Shared Card Pattern
+       =============================== */
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-md);padding:var(--space-3);margin-bottom:var(--space-4)}
+    .section-title{margin:0 0 var(--space-2);font-size:var(--fs-xl);line-height:1.3}
+
+    /* grid system */
+    .grid{display:grid;gap:var(--space-3)}
+    .grid--auto{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+
+    /* ===============================
+       Hero
+       =============================== */
+    .hero .hero-image{border-radius:var(--inner-radius);box-shadow:var(--shadow-sm)}
+    .caption{color:var(--muted);font-size:var(--fs-sm)}
+
+    /* ===============================
+       Info Blocks (1~3 구성 소개)
+       =============================== */
+    .info-item h3{margin:.25rem 0;font-size:var(--fs-lg)}
+    .info-item p{margin:0;color:var(--muted);font-size:var(--fs-sm)}
+
+    /* ===============================
+       Link Cards (통일된 썸네일 카드)
+       =============================== */
+    .link-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:var(--space-3)}
+    .link-card{display:block;text-decoration:none;color:inherit;background:var(--surface);border:1px solid var(--border);border-radius:var(--inner-radius);overflow:hidden;box-shadow:var(--shadow-sm);transition:transform .2s ease, box-shadow .2s ease}
+    .link-card:hover,.link-card:focus-within{transform:translateY(-4px);box-shadow:var(--shadow-lg)}
+    .link-card__thumb{aspect-ratio:16/9;background:#f3f3f3}
+    .link-card__body{padding:var(--space-2) var(--space-3)}
+    .link-card__title{margin:0 0 4px;font-size:var(--fs-md);font-weight:700}
+    .link-card__desc{margin:0;color:var(--muted);font-size:var(--fs-sm)}
+
+    /* ===============================
+       Movie Cards (YouTube inline)
+       =============================== */
+    .movie-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:var(--space-3)}
+    .movie-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--inner-radius);box-shadow:var(--shadow-sm);overflow:hidden;transition:transform .2s ease, box-shadow .2s ease}
+    .movie-card:hover,.movie-card:focus-within{transform:translateY(-4px);box-shadow:var(--shadow-lg)}
+
+    .player-box{position:relative;width:100%;aspect-ratio:16/9;background:#000;overflow:hidden}
+    .player-box iframe,.player-box img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border:0}
+    .play-overlay{position:absolute;inset:0;display:grid;place-items:center;background:linear-gradient(to top, rgba(0,0,0,.45), rgba(0,0,0,.05));transition:opacity .2s ease}
+    .movie-card:hover .play-overlay{opacity:.9}
+    .play-button{all:unset;cursor:pointer;width:64px;height:64px;background:rgba(255,255,255,.92);border-radius:50%;display:grid;place-items:center;box-shadow:0 4px 12px rgba(0,0,0,.25)}
+    .play-icon{width:28px;height:28px;fill:var(--brand)}
+
+    .movie-card h3{margin:var(--space-2) var(--space-3);font-size:var(--fs-md)}
+
+    @media (prefers-reduced-motion: reduce){
+      .link-card,.movie-card{transition:none}
     }
 
-    /* Play 버튼 오버레이 */
-    .play-btn {
-      position: absolute; inset: 0;
-      display: grid; place-items: center;
-      background: linear-gradient(to top, rgba(0,0,0,.45), rgba(0,0,0,.05));
-      border-radius: 8px;
-      transition: opacity .2s ease;
-    }
-    .movie-card:hover .play-btn { opacity: .9; }
-    .play-btn button {
-      all: unset;
-      cursor: pointer;
-      width: 64px; height: 64px;
-      background: rgba(255,255,255,.9);
-      border-radius: 50%;
-      display: grid; place-items: center;
-      box-shadow: 0 4px 12px rgba(0,0,0,.25);
-    }
-    .play-btn svg { width: 28px; height: 28px; fill: #e60023; } /* 빨간 재생 아이콘 */
+    /* ===============================
+       Team (라이트 테마로 통일)
+       =============================== */
+    .team-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-3)}
+    @media (min-width:540px){.team-grid{grid-template-columns:repeat(3,1fr)}}
+    @media (min-width:880px){.team-grid{grid-template-columns:repeat(5,1fr)}}
 
-    /* 접근성/선호설정 */
-    @media (prefers-reduced-motion: reduce) {
-      .link-card, .movie-card { transition: none; }
-    }
-        /* Team Grid */
-.team-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-@media (min-width:540px){.team-grid{grid-template-columns:repeat(3,1fr)}}
-@media (min-width:880px){.team-grid{grid-template-columns:repeat(5,1fr)}}
-.team-card{background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:16px 12px;display:grid;place-items:center;gap:10px;text-align:center;transition:transform .2s ease, box-shadow .2s ease, border-color .2s ease;box-shadow:0 1px 0 rgba(0,0,0,.15)}
-.team-card:focus{outline:none;box-shadow:var(--ring)}
-@media (hover:hover){.team-card:hover{transform:translateY(-6px);border-color:rgba(34,211,238,.4);box-shadow:0 10px 24px rgba(0,0,0,.35)}}
-@media (hover:none){.team-card:active{transform:translateY(-4px);border-color:rgba(34,211,238,.35)}}
-.avatar{width:96px;height:96px;border-radius:50%;overflow:hidden;border:2px solid rgba(255,255,255,.12);background:#0f172a}
-.avatar img{width:100%;height:100%;object-fit:cover;display:block}
-.team-name{font-weight:800;letter-spacing:.2px}
-.team-gh{font-size:12px;color:var(--muted)}  
+    .team-card{display:grid;place-items:center;gap:10px;text-align:center;background:var(--surface);border:1px solid var(--border);border-radius:var(--inner-radius);padding:var(--space-3);box-shadow:var(--shadow-sm);transition:transform .2s ease, box-shadow .2s ease}
+    .team-card:hover,.team-card:focus-within{transform:translateY(-4px);box-shadow:var(--shadow-lg)}
+
+    .avatar{width:96px;height:96px;border-radius:50%;overflow:hidden;border:2px solid #f0f0f0;background:#f6f6f6}
+    .team-name{font-weight:800;letter-spacing:.2px}
+    .team-gh{font-size:var(--fs-xs);color:var(--muted)}
   </style>
 </head>
 <body>
-  <header>
-    <h1>네일 수채화 갤러리</h1>
-    <span style="color:#777">HTML/CSS로 구현된 가벼운 데모 페이지</span>
+  <!-- ===============================
+       Header
+       =============================== -->
+  <header class="site-header" role="banner">
+    <h1 class="site-title">네일 수채화 갤러리</h1>
+    <span class="site-sub">HTML/CSS 일관성 강화 데모</span>
   </header>
 
-  <main>
-    <section class="card hero">
-      <h2>완성 이미지</h2>
-      <p>아래 이미지는 빨강색으로 통일된 수채화 스타일 네일 아트 예시입니다.</p>
-      <img src="assets/watercolor_red_nails.png" alt="빨강 수채화 네일 아트 예시" loading="lazy" decoding="async" />
-      <p style="color:#666;font-size:14px">이미지 비율을 유지하며 화면 크기에 맞춰 자동으로 축소/확대됩니다.</p>
+  <main id="content" role="main">
+    <!-- ===============================
+         Hero
+         =============================== -->
+    <section class="card hero" aria-labelledby="hero-title">
+      <h2 id="hero-title" class="section-title">완성 이미지</h2>
+      <p>아래 이미지는 빨강 포인트의 수채화 스타일 네일 아트 예시입니다.</p>
+      <img class="hero-image" src="assets/watercolor_red_nails.png" alt="빨강 수채화 네일 아트 예시" loading="lazy" decoding="async" />
+      <p class="caption">이미지 비율을 유지하며 화면 크기에 맞춰 자동으로 축소·확대됩니다.</p>
     </section>
 
-    <section class="card steps">
-      <h2>이 페이지의 구성</h2>
-      <div class="grid">
-        <div>
+    <!-- ===============================
+         구성 안내
+         =============================== -->
+    <section class="card" aria-labelledby="info-title">
+      <h2 id="info-title" class="section-title">이 페이지의 구성</h2>
+      <div class="grid grid--auto">
+        <div class="info-item">
           <h3>1) HTML</h3>
-          <p>이 파일은 <code>index.html</code>이며, 반응형 이미지와 카드 레이아웃을 포함합니다.</p>
+          <p>본 파일 <code>index.html</code>은 반응형 이미지와 카드 레이아웃을 포함합니다.</p>
         </div>
-        <div>
+        <div class="info-item">
           <h3>2) Python + Markdown</h3>
-          <p><code>01_image_and_md.py</code> 실행 시, 첨부 이미지를 설명하는 <code>image_explanation.md</code>를 생성합니다.</p>
+          <p><code>01_image_and_md.py</code> 실행 시, <code>image_explanation.md</code>를 생성합니다.</p>
         </div>
-        <div>
+        <div class="info-item">
           <h3>3) 웹 크롤링 예제</h3>
           <p><code>02_web_crawl_example.py</code>는 특정 URL의 제목/링크를 추출해 <code>crawl_result.md</code>로 저장합니다.</p>
         </div>
       </div>
     </section>
 
-    <section class="card">
-      <h2>초보자 전용: 아주 간단한 순서 가이드</h2>
+    <!-- ===============================
+         빠른 시작
+         =============================== -->
+    <section class="card" aria-labelledby="guide-title">
+      <h2 id="guide-title" class="section-title">초보자 전용: 아주 간단한 순서 가이드</h2>
       <ol>
-        <li>프로젝트 폴더를 열고 <code>index.html</code>을 더블클릭하여 브라우저에서 확인합니다.</li>
+        <li>프로젝트 폴더에서 <code>index.html</code>을 더블클릭하여 브라우저로 확인.</li>
         <li>터미널에서 <code>python 01_image_and_md.py</code> 실행.</li>
         <li><code>python 02_web_crawl_example.py --url "https://example.com"</code> 실행.</li>
       </ol>
-      <p style="color:#666">문제가 생기면 어느 단계까지 했는지 숫자로 알려주세요. (예: “2번까지 완료”)</p>
+      <p class="caption">문제가 생기면 어느 단계까지 했는지 숫자로 알려주세요. (예: “2번까지 완료”)</p>
     </section>
 
-    <section class="card">
-      <h2>개발자도구(F12)로 공통 태그 규칙 찾기</h2>
-      <p>크롬 개발자도구의 <strong>Elements</strong> 탭에서 좌측 상단의 선택 도구(화살표 아이콘)를 누르면 화면의 특정 영역을 선택할 수 있습니다.
-         비슷한 아이템을 여러 개 선택해 공통 클래스/태그/속성을 관찰하고 그 패턴을 CSS 선택자로 정리하세요.</p>
+    <!-- ===============================
+         DevTools 팁
+         =============================== -->
+    <section class="card" aria-labelledby="devtools-title">
+      <h2 id="devtools-title" class="section-title">개발자도구(F12)로 공통 태그 규칙 찾기</h2>
+      <p>
+        크롬 개발자도구의 <strong>Elements</strong> 탭에서 좌측 상단의 선택 도구(화살표 아이콘)로 화면의 특정 영역을 선택합니다.
+        비슷한 아이템을 여러 개 선택해 공통 클래스/태그/속성을 관찰하고 그 패턴을 CSS 선택자로 정리하세요.
+      </p>
       <ul>
-        <li>예) 상품 카드가 모두 <code>&lt;div class="product-card"&gt;</code>면 CSS/크롤러에서 <code>.product-card</code> 사용</li>
-        <li>예) 제목이 항상 <code>&lt;h2 class="title"&gt;</code>면 크롤러에서 <code>select('h2.title')</code> 사용</li>
+        <li>예) 상품 카드가 모두 <code>&lt;div class="product-card"&gt;</code> → CSS/크롤러에서 <code>.product-card</code></li>
+        <li>예) 제목이 항상 <code>&lt;h2 class="title"&gt;</code> → 크롤러에서 <code>select('h2.title')</code></li>
       </ul>
     </section>
 
-    <!-- Link: 카드형 그리드 -->
-    <section class="card link" aria-labelledby="link-title">
-      <h2 id="link-title">Link</h2>
-      <div class="grid">
-        <!-- 변경된 1번째 카드 시작-->
-        <a href="./lunch-game/index.html" class="link-card" rel="noopener">
-          <div class="thumb">
-            <img src="./lunch-game/lunch-game.JPG" alt="점심 게임 미리보기" loading="lazy" decoding="async" />
+    <!-- ===============================
+         Links
+         =============================== -->
+    <section class="card" aria-labelledby="link-title">
+      <h2 id="link-title" class="section-title">Link</h2>
+      <div class="link-grid">
+        <a href="./lunch-game/index.html" class="link-card" rel="noopener noreferrer">
+          <div class="link-card__thumb"><img src="./lunch-game/lunch-game.JPG" alt="점심 게임 미리보기" loading="lazy" decoding="async"></div>
+          <div class="link-card__body">
+            <h3 class="link-card__title">점심 게임</h3>
+            <p class="link-card__desc">무료 지도 API로 주변 음식점을 랜덤 추천.</p>
           </div>
-          <h3>점심 게임</h3>
-          <p>무료 API 지도를 이용해 주변 음식점을 랜덤으로 선택.</p>
         </a>
-        <!-- 변경된 1번째 카드 끝-->
-        
-        <!-- 변경된 2번째 카드 시작-->
-        <a href="./math.html" class="link-card" rel="noopener">
-          <div class="thumb">
-            <img src="./math.JPG" alt="산수게임 미리보기" loading="lazy" decoding="async" />
+
+        <a href="./math.html" class="link-card" rel="noopener noreferrer">
+          <div class="link-card__thumb"><img src="./math.JPG" alt="산수게임 미리보기" loading="lazy" decoding="async"></div>
+          <div class="link-card__body">
+            <h3 class="link-card__title">산수게임</h3>
+            <p class="link-card__desc">더하기·빼기를 저학년이 게임처럼 학습.</p>
           </div>
-          <h3>산수게임</h3>
-          <p>더하기(+) | 빼기(-)를 저학년에게 게임처럼 할 수 있게 만들었다.</p>
         </a>
-        <!-- 변경된 2번째 카드 끝-->
-        <!-- 변경된 3번째 카드 시작-->
-        <a href="./music.html" class="link-card" rel="noopener">
-          <div class="thumb">
-            <img src="./music.JPG" alt="뮤직플레이어 미리보기" loading="lazy" decoding="async" />
+
+        <a href="./music.html" class="link-card" rel="noopener noreferrer">
+          <div class="link-card__thumb"><img src="./music.JPG" alt="뮤직플레이어 미리보기" loading="lazy" decoding="async"></div>
+          <div class="link-card__body">
+            <h3 class="link-card__title">뮤직플레이어</h3>
+            <p class="link-card__desc">assets 또는 내 기기 음악을 재생하는 간단 플레이어.</p>
           </div>
-          <h3>뮤직플레이어</h3>
-          <p>assets 음악 또는 내 기기 음악을 재생하는 간단 플레이어.</p>
         </a>
-        <!-- 변경된 3번째 카드 끝-->
-        <!-- 필요 시 카드 추가 -->
       </div>
     </section>
 
-    <!-- Movie: 카드 내 즉시 재생(페이지 이탈 없음) -->
-    <section class="card movie" aria-labelledby="movie-title">
-      <h2 id="movie-title">Movie</h2>
-      <div class="grid" id="movie-grid">
-        <!-- 카드 1 시작-->
-        <div class="movie-card">
+    <!-- ===============================
+         Movies (inline play)
+         =============================== -->
+    <section class="card" aria-labelledby="movie-title">
+      <h2 id="movie-title" class="section-title">Movie</h2>
+      <div class="movie-grid" id="movie-grid">
+        <!-- 카드 1 -->
+        <article class="movie-card">
           <div class="player-box" data-video-id="azJZJh3TZVc" aria-label="인생 뭐 있나 재생 영역">
             <img src="https://img.youtube.com/vi/azJZJh3TZVc/hqdefault.jpg" alt="인생 뭐 있나 썸네일" loading="lazy" decoding="async" />
-            <div class="play-btn">
-              <button type="button" class="play" aria-label="인생 뭐 있나 재생">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+            <div class="play-overlay">
+              <button type="button" class="play-button" aria-label="인생 뭐 있나 재생">
+                <svg class="play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
               </button>
             </div>
           </div>
           <h3>인생 뭐 있나</h3>
-        </div>
-        <!-- 카드 1 끝-->
-        <!-- 카드 2 시작-->
-        <div class="movie-card">
+        </article>
+
+        <!-- 카드 2 -->
+        <article class="movie-card">
           <div class="player-box" data-video-id="YYYYYYYY" aria-label="HTML/CSS 기초 강좌 재생 영역">
             <img src="https://img.youtube.com/vi/YYYYYYYY/hqdefault.jpg" alt="HTML/CSS 기초 강좌 썸네일" loading="lazy" decoding="async" />
-            <div class="play-btn">
-              <button type="button" class="play" aria-label="HTML/CSS 기초 강좌 재생">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+            <div class="play-overlay">
+              <button type="button" class="play-button" aria-label="HTML/CSS 기초 강좌 재생">
+                <svg class="play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
               </button>
             </div>
           </div>
           <h3>HTML/CSS 기초 강좌</h3>
-        </div>
-        <!-- 카드 2 끝-->
-        <!-- 카드 3 시작-->
-        <div class="movie-card">
+        </article>
+
+        <!-- 카드 3 -->
+        <article class="movie-card">
           <div class="player-box" data-video-id="ZZZZZZZZ" aria-label="파이썬 크롤링 예제 설명 재생 영역">
             <img src="https://img.youtube.com/vi/ZZZZZZZZ/hqdefault.jpg" alt="파이썬 크롤링 예제 설명 썸네일" loading="lazy" decoding="async" />
-            <div class="play-btn">
-              <button type="button" class="play" aria-label="파이썬 크롤링 예제 설명 재생">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+            <div class="play-overlay">
+              <button type="button" class="play-button" aria-label="파이썬 크롤링 예제 설명 재생">
+                <svg class="play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
               </button>
             </div>
           </div>
           <h3>파이썬 크롤링 예제 설명</h3>
-        </div>
-        <!-- 카드 3 끝-->
-      
+        </article>
       </div>
     </section>
-  <!--팀원 소개 -->
 
-<section>
-
-<div id="about-team" class="container" style="padding-top:0">
-<div class="spacer"></div>
-<h3>팀원 소개</h3>
-<div id="teamRoot" class="team-grid"></div>
-</div>
-
-
-</section>
-    <!--팀원 소개 끝 -->
-
-    
+    <!-- ===============================
+         Team
+         =============================== -->
+    <section class="card" aria-labelledby="team-title">
+      <h2 id="team-title" class="section-title">팀원 소개</h2>
+      <div id="teamRoot" class="team-grid" aria-live="polite"></div>
+    </section>
   </main>
 
-  <footer>© 2025 Watercolor Nails Demo</footer>
+  <footer class="site-footer">© 2025 Watercolor Nails Demo</footer>
 
+  <!-- ===============================
+       Scripts
+       =============================== -->
   <script>
-    // 한 번에 하나만 재생되도록 관리
-    const movieGrid = document.getElementById('movie-grid');
-    let currentPlayer = null;
+    // 하나만 재생 (일관 API)
+    (()=>{
+      const movieGrid = document.getElementById('movie-grid');
+      let currentBox = null;
 
-    function createIframe(videoId) {
-      const iframe = document.createElement('iframe');
-      iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`;
-      iframe.setAttribute('title', 'YouTube video player');
-      iframe.setAttribute('allow',
-        'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
-      iframe.allowFullscreen = true;
-      iframe.loading = 'lazy';
-      return iframe;
-    }
-
-    function mountPlayer(box) {
-      const videoId = box.dataset.videoId;
-      if (!videoId) return;
-
-      // 기존 플레이어 정리
-      if (currentPlayer && currentPlayer !== box) {
-        teardownPlayer(currentPlayer);
+      function createIframe(videoId){
+        const iframe = document.createElement('iframe');
+        iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`;
+        iframe.title = 'YouTube video player';
+        iframe.setAttribute('allow','accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
+        iframe.allowFullscreen = true;
+        iframe.loading = 'lazy';
+        return iframe;
       }
-
-      // 썸네일/버튼 숨김
-      const img = box.querySelector('img');
-      const overlay = box.querySelector('.play-btn');
-      if (img) img.style.display = 'none';
-      if (overlay) overlay.style.display = 'none';
-
-      // iframe 삽입
-      const iframe = createIframe(videoId);
-      box.appendChild(iframe);
-      currentPlayer = box;
-    }
-
-    function teardownPlayer(box) {
-      const iframe = box.querySelector('iframe');
-      if (iframe) iframe.remove();
-      const img = box.querySelector('img');
-      const overlay = box.querySelector('.play-btn');
-      if (img) img.style.display = '';
-      if (overlay) overlay.style.display = '';
-    }
-
-    // 클릭/키보드(Enter/Space) 재생
-    movieGrid.addEventListener('click', (e) => {
-      const btn = e.target.closest('.play');
-      if (!btn) return;
-      const box = btn.closest('.player-box');
-      mountPlayer(box);
-    });
-
-    movieGrid.addEventListener('keydown', (e) => {
-      if (e.key !== 'Enter' && e.key !== ' ') return;
-      const focused = document.activeElement;
-      if (focused && focused.classList.contains('play')) {
-        e.preventDefault();
-        const box = focused.closest('.player-box');
-        mountPlayer(box);
+      function mount(box){
+        const id = box?.dataset?.videoId; if(!id) return;
+        if(currentBox && currentBox!==box) unmount(currentBox);
+        box.querySelector('img')?.style && (box.querySelector('img').style.display='none');
+        box.querySelector('.play-overlay')?.style && (box.querySelector('.play-overlay').style.display='none');
+        box.appendChild(createIframe(id));
+        currentBox = box;
       }
-    });
-
-    // 뷰 나갈 때 자동 정리(옵션)
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden && currentPlayer) {
-        teardownPlayer(currentPlayer);
-        currentPlayer = null;
+      function unmount(box){
+        box.querySelector('iframe')?.remove();
+        const img = box.querySelector('img'); if(img) img.style.display='';
+        const ov = box.querySelector('.play-overlay'); if(ov) ov.style.display='';
       }
-    });
+      movieGrid.addEventListener('click',(e)=>{
+        const btn = e.target.closest('.play-button'); if(!btn) return;
+        mount(btn.closest('.player-box'));
+      });
+      movieGrid.addEventListener('keydown',(e)=>{
+        if(e.key!=='Enter' && e.key!==' ') return;
+        const el = document.activeElement;
+        if(el && el.classList.contains('play-button')){ e.preventDefault(); mount(el.closest('.player-box')); }
+      });
+      document.addEventListener('visibilitychange',()=>{ if(document.hidden && currentBox){ unmount(currentBox); currentBox=null; }});
+    })();
   </script>
+
   <script>
-(()=>{
-'use strict';
-const TEAM = [
-{ name:'PM.박', img:'./team/1.png', github:'https://newfacesandnewfacess.github.io/poly-data/' },
-{ name:'PM.임', img:'./team/2.png', github:'https://a85339559-sys.github.io/ljh6625/' },
-{ name:'PM.김One', img:'./team/3.png', github:'https://ezekiel123581-cell.github.io/' },
-{ name:'PM.김Two', img:'./team/4.png', github:'https://skymoon9577.github.io/first/' },
-{ name:'PM.신', img:'./team/5.png', github:'https://github.com/your-shin' }
-];
+    // 팀원 카드 렌더 (보안/일관 API)
+    (()=>{
+      'use strict';
+      const TEAM = [
+        { name:'PM.박', img:'./team/1.png', github:'https://newfacesandnewfacess.github.io/poly-data/' },
+        { name:'PM.임', img:'./team/2.png', github:'https://a85339559-sys.github.io/ljh6625/' },
+        { name:'PM.김One', img:'./team/3.png', github:'https://ezekiel123581-cell.github.io/' },
+        { name:'PM.김Two', img:'./team/4.png', github:'https://skymoon9577.github.io/first/' },
+        { name:'PM.신', img:'https://github.com/your-shin.png?size=200', github:'https://github.com/your-shin' }
+      ];
 
+      const AVATAR_PLACEHOLDER = `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><rect width='100%' height='100%' fill='%23f3f3f3'/><text x='50%' y='50%' fill='%23999' font-size='14' font-family='system-ui' dominant-baseline='middle' text-anchor='middle'>No Image</text></svg>`;
 
-const AVATAR_PLACEHOLDER = `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><rect width='100%' height='100%' fill='%23111a2e'/><text x='50%' y='50%' fill='%23566' font-size='14' font-family='system-ui' dominant-baseline='middle' text-anchor='middle'>No Image</text></svg>`;
+      function escapeHTML(s){
+        return String(s).replace(/[&<>\"]/g,(m)=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[m]));
+      }
 
+      const root = document.getElementById('teamRoot');
+      if(!root) return;
+      root.innerHTML = TEAM.map(m=>`
+        <a class="team-card" href="${m.github}" target="_blank" rel="noopener noreferrer" aria-label="${escapeHTML(m.name)}의 GitHub로 이동">
+          <span class="avatar"><img src="${m.img}" alt="${escapeHTML(m.name)} 사진" loading="lazy" decoding="async"></span>
+          <span class="team-name">${escapeHTML(m.name)}</span>
+          <span class="team-gh">GitHub 방문</span>
+        </a>
+      `).join('');
 
-function escapeHTML(s){
-return String(s).replace(/[&<>\"]/g, function(m){
-switch(m){
-case '&': return '&amp;';
-case '<': return '&lt;';
-case '>': return '&gt;';
-case '"': return '&quot;';
-default: return m;
-}
-});
-}
-
-
-const root = document.getElementById('teamRoot');
-if(!root) return;
-
-
-root.innerHTML = TEAM.map(m => `
-<a class="team-card" href="${m.github}" target="_blank" rel="noopener" aria-label="${escapeHTML(m.name)}의 GitHub로 이동">
-<span class="avatar"><img src="${m.img}" alt="${escapeHTML(m.name)} 사진" loading="lazy" decoding="async"></span>
-<span class="team-name">${escapeHTML(m.name)}</span>
-<span class="team-gh">GitHub 방문</span>
-</a>
-`).join('');
-
-
-root.querySelectorAll('.avatar img').forEach(img=>{
-img.addEventListener('error', ()=>{ img.src = AVATAR_PLACEHOLDER; });
-});
-})();
-</script>
-  
+      root.querySelectorAll('.avatar img').forEach(img=>{
+        img.addEventListener('error',()=>{ img.src = AVATAR_PLACEHOLDER; });
+      });
+    })();
+  </script>
 </body>
 </html>
