@@ -122,6 +122,18 @@
     @media (prefers-reduced-motion: reduce) {
       .link-card, .movie-card { transition: none; }
     }
+        /* Team Grid */
+.team-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (min-width:540px){.team-grid{grid-template-columns:repeat(3,1fr)}}
+@media (min-width:880px){.team-grid{grid-template-columns:repeat(5,1fr)}}
+.team-card{background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:16px 12px;display:grid;place-items:center;gap:10px;text-align:center;transition:transform .2s ease, box-shadow .2s ease, border-color .2s ease;box-shadow:0 1px 0 rgba(0,0,0,.15)}
+.team-card:focus{outline:none;box-shadow:var(--ring)}
+@media (hover:hover){.team-card:hover{transform:translateY(-6px);border-color:rgba(34,211,238,.4);box-shadow:0 10px 24px rgba(0,0,0,.35)}}
+@media (hover:none){.team-card:active{transform:translateY(-4px);border-color:rgba(34,211,238,.35)}}
+.avatar{width:96px;height:96px;border-radius:50%;overflow:hidden;border:2px solid rgba(255,255,255,.12);background:#0f172a}
+.avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.team-name{font-weight:800;letter-spacing:.2px}
+.team-gh{font-size:12px;color:var(--muted)}  
   </style>
 </head>
 <body>
@@ -258,6 +270,21 @@
       
       </div>
     </section>
+  <!--팀원 소개 -->
+
+<section>
+
+<div id="about-team" class="container" style="padding-top:0">
+<div class="spacer"></div>
+<h3>팀원 소개</h3>
+<div id="teamRoot" class="team-grid"></div>
+</div>
+
+
+</section>
+    <!--팀원 소개 끝 -->
+
+    
   </main>
 
   <footer>© 2025 Watercolor Nails Demo</footer>
@@ -334,5 +361,52 @@
       }
     });
   </script>
+  <script>
+(()=>{
+'use strict';
+const TEAM = [
+{ name:'PM.박', img:'./team/1.png', github:'https://newfacesandnewfacess.github.io/poly-data/' },
+{ name:'PM.임', img:'./team/2.png', github:'https://a85339559-sys.github.io/ljh6625/' },
+{ name:'PM.김One', img:'./team/3.png', github:'https://ezekiel123581-cell.github.io/' },
+{ name:'PM.김Two', img:'./team/4.png', github:'https://skymoon9577.github.io/first/' },
+{ name:'PM.신', img:'./team/5.png', github:'https://github.com/your-shin' }
+];
+
+
+const AVATAR_PLACEHOLDER = `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><rect width='100%' height='100%' fill='%23111a2e'/><text x='50%' y='50%' fill='%23566' font-size='14' font-family='system-ui' dominant-baseline='middle' text-anchor='middle'>No Image</text></svg>`;
+
+
+function escapeHTML(s){
+return String(s).replace(/[&<>\"]/g, function(m){
+switch(m){
+case '&': return '&amp;';
+case '<': return '&lt;';
+case '>': return '&gt;';
+case '"': return '&quot;';
+default: return m;
+}
+});
+}
+
+
+const root = document.getElementById('teamRoot');
+if(!root) return;
+
+
+root.innerHTML = TEAM.map(m => `
+<a class="team-card" href="${m.github}" target="_blank" rel="noopener" aria-label="${escapeHTML(m.name)}의 GitHub로 이동">
+<span class="avatar"><img src="${m.img}" alt="${escapeHTML(m.name)} 사진" loading="lazy" decoding="async"></span>
+<span class="team-name">${escapeHTML(m.name)}</span>
+<span class="team-gh">GitHub 방문</span>
+</a>
+`).join('');
+
+
+root.querySelectorAll('.avatar img').forEach(img=>{
+img.addEventListener('error', ()=>{ img.src = AVATAR_PLACEHOLDER; });
+});
+})();
+</script>
+  
 </body>
 </html>
